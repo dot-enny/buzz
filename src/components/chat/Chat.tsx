@@ -41,7 +41,7 @@ const Top = () => {
 const Center = () => {
   return (
     <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
-      <Message />
+      <Messages />
     </div>
   )
 }
@@ -80,7 +80,7 @@ const Bottom = () => {
   )
 }
 
-const Message = () => {
+const Messages = () => {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
