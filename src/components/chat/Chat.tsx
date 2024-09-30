@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { IconCamera } from "../icons/IconCamera"
 import { IconEmoji } from "../icons/IconEmoji"
 import { IconInfo } from "../icons/IconInfo"
@@ -41,7 +41,7 @@ const Top = () => {
 const Center = () => {
   return (
     <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
-      <Message />
+      <Messages />
     </div>
   )
 }
@@ -80,7 +80,14 @@ const Bottom = () => {
   )
 }
 
-const Message = () => {
+const Messages = () => {
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
+
+  const endRef = useRef<HTMLDivElement | null>(null);
+
   return (
     <>
       <div className="message max-w-[70%] flex gap-5">
@@ -97,6 +104,7 @@ const Message = () => {
           <span className="text-neutral-500 text-xs">12:00 PM</span>
         </div>
       </div>
+      <div ref={endRef} />
     </>
   )
 }
