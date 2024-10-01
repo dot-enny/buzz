@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 * {
     margin: 0;
     padding: 0;
@@ -13,3 +14,30 @@ body {
     background: #0a0a0a;
     color: white;
 }
+
+.auth-form {
+    @apply h-screen flex justify-center items-center;
+
+    >div {
+        @apply grid gap-10 items-center md:w-1/4;
+    }
+    h2 {
+        @apply text-xl font-bold mx-auto; 
+    }
+    form {
+        @apply flex flex-col justify-center gap-5;
+        input[type="text"] {
+            @apply p-3 border-none outline-none bg-neutral-900 rounded;
+        }
+        button {
+            @apply p-3 rounded border-none bg-blue-900 font-medium mt-4;
+        }
+        a {
+            @apply text-amber-300 text-sm;
+        }
+    }
+}
+.auth-form__secondary-cta {
+    @apply text-sm flex justify-between;
+}
+
