@@ -1,12 +1,18 @@
 import { IconChevronDown } from "../icons/IconChevronDown"
 import { IconChevronUp } from "../icons/IconChevronUp"
 import { IconDownload } from "../icons/IconDownload"
+import { auth } from "../../lib/firebase"
 
 export const Detail = () => {
+
+  const signOut = async () => {
+    await auth.signOut();
+  };
+
   return (
     <div className="flex-1 flex flex-col h-screen">
       {/* CONTACT PROFILE */}
-      <div className="user py-7 px-5 flex flex-col items-center gap-5 border-b border-neutral-800">
+      <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
         <img src="./img/avatar-placeholder.png" alt="user" className="w-24 h-24 rounded-full object-cover" />
         <h2>Jane Doe</h2>
         <p className="text-neutral-500">Lorem ipsum dolor, sit amet.</p>
@@ -14,7 +20,10 @@ export const Detail = () => {
       {/* CHAT MENU */}
       <div className="info p-5 flex-1 flex flex-col gap-7 overflow-auto">
         <Options />
-        <button className="mt-1 text-red-500 w-fit mx-auto">Block User</button>
+        <div className="flex">
+          <button className="mt-1 text-red-500 w-fit mx-auto">Block User</button>
+          <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
+        </div>
       </div>
     </div>
   )
