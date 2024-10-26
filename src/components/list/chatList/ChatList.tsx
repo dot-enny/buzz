@@ -4,15 +4,20 @@ import { IconSearch } from "../../icons/IconSearch"
 import { IconMinus } from "../../icons/IconMinus";
 import { AddUser } from "./addUser/AddUser";
 import { db } from "../../../lib/firebase";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useUserStore } from "../../../lib/userStore";
 import { useChatStore } from "../../../lib/chatStore";
+
 
 export const ChatList = () => {
 
     const [addMode, setAddMode] = useState(false);
     const [chats, setChats] = useState<any[]>([]);
+
     const { currentUser } = useUserStore();
+    const { changeChat } = useChatStore();
+
+    useEffect(() => {
         const unsub = onSnapshot(doc(db, "userchats", currentUser.id), async (res) => {
             const data = res.data();
             const items = data ? data.chats : [];
@@ -31,6 +36,28 @@ export const ChatList = () => {
         return () => unsub();
     }, [currentUser.id]);
 
+    const handleSelectChat = async (chat: any) => {
+        const userChats = chats.map((item) => {
+            const { user, ...rest } = item;
+            return rest;
+        });
+
+        const chatIndex = userChats.findIndex((item) => item.chatId === chat.chatId);
+
+        userChats[chatIndex].isSeen = true;
+
+        const userChatsRef = doc(db, "userchats", currentUser.id);
+
+        try {
+            await updateDoc(userChatsRef, {
+                chats: userChats,
+            });
+            changeChat(chat.chatId, chat.user);
+        } catch (err) {
+            console.log(err);
+        };
+    };
+
     return (
         <div className="flex-1 overflow-y-scroll">
             <div className="flex items-center gap-5 p-5">
@@ -42,10 +69,11 @@ export const ChatList = () => {
                     {addMode ? <IconMinus /> : <IconPlus />}
                 </div>
             </div>
+
             {
                chats && 
                 chats.map((chat) => (
-                    <ListItem key={chat.chatId} chat={chat} />
+                    <ListItem key={chat.chatId} chat={chat} onClick={() => handleSelectChat(chat)} />
                 ))
             }
 
@@ -57,10 +85,15 @@ export const ChatList = () => {
 }
 
 
-const ListItem = ({ chat }: { chat: any }) => {
+const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
     const sender = chat.user;
+    
     return (
-        <div className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800">
+        <div onClick={onClick} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
+            style={{
+                backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'    
+            }}
+        >
             <img src={ sender.avatar || './img/avatar-placeholder.png'} alt="user" className="w-12 h-12 rounded-full object-cover" />
             <div>
                 <h2>{ sender.username }</h2>
