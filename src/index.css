@@ -41,3 +41,8 @@ body {
     @apply text-sm flex justify-between;
 }
 
+.message {
+    @apply max-w-[70%] flex gap-5;
+}
+
+
