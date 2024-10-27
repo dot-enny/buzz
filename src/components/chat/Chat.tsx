@@ -7,13 +7,26 @@ import { IconPhone } from "../icons/IconPhone"
 import { IconPhoto } from "../icons/IconPhoto"
 import { IconVideo } from "../icons/IconVideo"
 import EmojiPicker from "emoji-picker-react"
+import { useChatStore } from "../../lib/chatStore"
+import { arrayUnion, doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore"
 
 export const Chat = () => {
+  const { chatId } = useChatStore();
+  
   return (
     <div className="h-screen flex flex-col flex-[2] border-l border-r border-neutral-800">
-      <Top />
-      <Center />
-      <Bottom />
+      {chatId ? (
+        <>
+          <Top />
+          <Center />
+          <Bottom />
+        </>
+      ) : (
+        <h3 className="text-3xl m-auto text-neutral-800 font-semibold text-center max-w-[65%] leading-[1.3]">
+          Select a chat to display your messages here
+        </h3>
+      )
+      }
     </div>
   )
 }
@@ -39,9 +52,30 @@ const Top = () => {
 
 
 const Center = () => {
+  const { chatId } = useChatStore();
+  const [chat, setChat] = useState<any | null>(null);
+
+  const messages = chat?.messages;
+
+  useEffect(() => {
+    if (chatId) {
+      const unSub = onSnapshot(
+        doc(db, "chats", chatId),
+        (res: any) => {
+          setChat(res.data());
+        }
+      );
+      return () => unSub();
+    }
+  }, [chatId]);
+
   return (
     <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
-      <Messages />
+      {messages &&
+        messages.map((message: any) => (
+          <Message key={message.createdAt} message={message} />
+        ))
+      }
     </div>
   )
 }
@@ -80,16 +114,32 @@ const Bottom = () => {
   )
 }
 
-const Messages = () => {
+const Message = ({ message }: { message?: any }) => {
+
+  const { currentUser } = useUserStore();
+
+  const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
-  const endRef = useRef<HTMLDivElement | null>(null);
-
   return (
     <>
+      {
+        message.senderId === currentUser.id ?
+          (
+            <div className="message self-end">
+              <div className="texts flex-1 flex flex-col gap-1">
+                <p className="text-white bg-blue-900 p-5 rounded-lg">{message.text}</p>
+                {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
+                <span className="text-neutral-500 text-xs">12:00 PM</span>
+              </div>
+            </div>
+          ) : (
+            <div className="message">
+              <img src="./img/avatar-placeholder.png" alt="user" className="w-7 h-7 rounded-full object-cover" />
+              <div className="texts flex-1 flex flex-col gap-1">
       <div className="message max-w-[70%] flex gap-5">
         <img src="./img/avatar-placeholder.png" alt="user" className="w-7 h-7 rounded-full object-cover" />
         <div className="texts flex-1 flex flex-col gap-1">
@@ -104,6 +154,14 @@ const Messages = () => {
           <span className="text-neutral-500 text-xs">12:00 PM</span>
         </div>
       </div>
+                <p className="text-white bg-blue-950/30 p-5 rounded-lg">{message.text}</p>
+                {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
+                <span className="text-neutral-500 text-xs">12:00 PM</span>
+              </div>
+            </div>
+          )
+      }
+
       <div ref={endRef} />
     </>
   )
