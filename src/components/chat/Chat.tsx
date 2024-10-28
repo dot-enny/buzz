@@ -9,6 +9,8 @@ import { IconVideo } from "../icons/IconVideo"
 import EmojiPicker from "emoji-picker-react"
 import { useChatStore } from "../../lib/chatStore"
 import { arrayUnion, doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore"
+import { db } from "../../lib/firebase"
+import { useUserStore } from "../../lib/userStore"
 
 export const Chat = () => {
   const { chatId } = useChatStore();
@@ -81,36 +83,90 @@ const Center = () => {
 }
 
 const Bottom = () => {
+  const { currentUser } = useUserStore();
+  const { chatId, user } = useChatStore();
+
   const [openEmoji, setOpenEmoji] = useState(false);
   const [text, setText] = useState('');
 
   const handleEmoji = (e: any) => {
     setText((prev) => prev + e.emoji);
     setOpenEmoji(false);
-  }
-  
+  };
+
+
+  const handleSendText = async () => {
+    if (text === "") return;
+
+    if (chatId)
+
+      try {
+        if (img.file) imgUrl = await upload(img.file);
+
+        await updateDoc(doc(db, "chats", chatId), {
+          messages: arrayUnion({
+            senderId: currentUser.id,
+            text,
+            createdAt: new Date(),
+          })
+        })
+      } catch (err) {
+        console.log(err)
+      };
+
+
+    const userIDs = [currentUser.id, user.id];
+
+    userIDs.forEach(async (id) => {
+      const userChatsRef = doc(db, "userchats", id);
+      const userChatsSnapshot = await getDoc(userChatsRef);
+
+      if (userChatsSnapshot.exists()) {
+        const userChatsData = userChatsSnapshot.data();
+        const chatIndex = userChatsData.chats.findIndex((chat: any) => chat.chatId === chatId);
+
+        userChatsData.chats[chatIndex].lastMessage = text;
+        userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+        userChatsData.chats[chatIndex].updatedAt = Date.now();
+
+        await updateDoc(userChatsRef, {
+          chats: userChatsData.chats,
+        });
+      };
+    });
+
+    setText("");
+
+  };
+
+
   return (
     <div className="bottom mt-auto flex justify-between items-center gap-5 p-5 border-t border-neutral-800">
-        <div className="icons flex gap-5">
+      <div className="icons flex gap-5">
           <IconPhoto />
-          <IconCamera />
-          <IconMicrophone />
-        </div>
-        <input type="text" placeholder="Type a message..."
-          className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <div className="emoji relative">
-          <div onClick={() => setOpenEmoji(prev => !prev)}>
-            <IconEmoji />
-          </div>
-          <div className="absolute bottom-12 left-0">
-            <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
-          </div>
-        </div>
-        <button className="bg-blue-900 text-white py-2 px-4 border-none rounded">Send</button>
+        <IconCamera />
+        <IconMicrophone />
       </div>
+      <input type="text" placeholder="Type a message..."
+        className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <div className="emoji relative">
+        <div onClick={() => setOpenEmoji(prev => !prev)}>
+          <IconEmoji />
+        </div>
+        <div className="absolute bottom-12 left-0">
+          <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
+        </div>
+      </div>
+      <button 
+        onClick={handleSendText}
+        className="bg-blue-900 text-white py-2 px-4 border-none rounded" 
+      >
+        Send
+      </button>
+    </div>
   )
 }
 
