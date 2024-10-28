@@ -44,12 +44,15 @@ export const Chat = () => {
 }
 
 const Top = () => {
+
+  const { user } = useChatStore();
+
   return (
     <div className="top p-5 flex justify-between items-center border-b border-neutral-800">
       <div className="user flex items-center gap-5">
-        <img src="./img/avatar-placeholder.png" alt="user" className="w-14 h-14 rounded-full object-cover" />
+        <img src={ user ? user.avatar : './img/avatar-placeholder.png' } alt="user" className="w-14 h-14 rounded-full object-cover" />
         <div className="texts flex flex-col gap-1">
-          <span className="text-lg font-bold">Jane Doe</span>
+          <span className="text-lg font-bold">{user ? user.username: ''}</span>
           <p className="text-sm font-light text-neutral-500">Lorem ipsum dolor, sit amet.</p>
         </div>
       </div>
@@ -171,7 +174,6 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
     setText("");
 
   };
-
 
   return (
     <div className="bottom mt-auto flex justify-between items-center gap-5 p-5 border-t border-neutral-800">
