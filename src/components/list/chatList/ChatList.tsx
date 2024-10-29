@@ -13,6 +13,9 @@ export const ChatList = () => {
 
     const [addMode, setAddMode] = useState(false);
     const [chats, setChats] = useState<any[]>([]);
+    const [input, setInput] = useState('');
+
+    const filteredChats = chats.filter((chat) => chat.user.username.toLowerCase().includes(input.toLowerCase()));
 
     const { currentUser } = useUserStore();
     const { changeChat } = useChatStore();
@@ -63,7 +66,10 @@ export const ChatList = () => {
             <div className="flex items-center gap-5 p-5">
                 <div className="flex-1 bg-neutral-900 flex items-center gap-5 p-2 rounded-lg">
                     <IconSearch />
-                    <input type="text" placeholder="Search" className="bg-transparent border-none outline-none text-white" />
+                    <input type="text" placeholder="Search" 
+                        onChange={(e) => setInput(e.target.value)}
+                        className="bg-transparent border-none outline-none text-white" 
+                    />
                 </div>
                 <div onClick={() => setAddMode((prev) => !prev)} className="cursor-pointer">
                     {addMode ? <IconMinus /> : <IconPlus />}
@@ -72,7 +78,7 @@ export const ChatList = () => {
 
             {
                chats && 
-                chats.map((chat) => (
+                filteredChats.map((chat) => (
                     <ListItem key={chat.chatId} chat={chat} onClick={() => handleSelectChat(chat)} />
                 ))
             }
