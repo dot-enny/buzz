@@ -2,12 +2,12 @@
 
 ## Description
 Live Chat Application built with react and firebase.   
-Add Friends and start a chatting with them instantly on Buzz.
+Add friends and start a chatting with them instantly on Buzz.
 
 ## Status
 Work in progress
 
-## TECH STACK, TOOLS AND PACKAGES.
+## Tech Stack, Tools and Packages.
 - Vite.
 - React.
 - React Router.
@@ -21,6 +21,7 @@ Work in progress
 - Twitter - [@dot_enny](https://twitter.com/dot_enny)
 - Linkedin - [Olaniyan Eniola](https://www.linkedin.com/in/eniola-olaniyan-63a578263)
 
+## Run Locally
 to run locally run 'npm install' to install project dependencies after cloning and run 'npm run dev' to start server.
 
 # React + TypeScript + Vite
