@@ -1,7 +1,7 @@
 # Buzz
 
 ## Description
-Live Chat Application built with react and firebase.
+Live Chat Application built with react and firebase.   
 Add Friends and start a chatting with them instantly on Buzz.
 
 ## Status
@@ -14,6 +14,12 @@ Work in progress
 - Firebase.
 - React Toastify.
 - Zustand.
+
+## Author
+
+- Github - [dot-enny](https://github.com/dot-enny)
+- Twitter - [@dot_enny](https://twitter.com/dot_enny)
+- Linkedin - [Olaniyan Eniola](https://www.linkedin.com/in/eniola-olaniyan-63a578263)
 
 to run locally run 'npm install' to install project dependencies after cloning and run 'npm run dev' to start server.
 
