@@ -11,17 +11,27 @@ import { useChatStore } from "../../lib/chatStore"
 import { arrayUnion, doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore"
 import { db } from "../../lib/firebase"
 import { useUserStore } from "../../lib/userStore"
+import { upload } from "../../lib/upload"
+interface Img {
+  file: File | null,
+  url: string
+}
 
 export const Chat = () => {
   const { chatId } = useChatStore();
   
+  const [img, setImg] = useState<Img>({
+    file: null,
+    url: "",
+  })
+
   return (
     <div className="h-screen flex flex-col flex-[2] border-l border-r border-neutral-800">
       {chatId ? (
         <>
           <Top />
-          <Center />
-          <Bottom />
+          <Center img={img.url} />
+          <Bottom setImg={setImg} img={img} />
         </>
       ) : (
         <h3 className="text-3xl m-auto text-neutral-800 font-semibold text-center max-w-[65%] leading-[1.3]">
@@ -53,7 +63,8 @@ const Top = () => {
 }
 
 
-const Center = () => {
+const Center = ({ img }: { img: string }) => {
+
   const { chatId } = useChatStore();
   const [chat, setChat] = useState<any | null>(null);
 
@@ -78,11 +89,19 @@ const Center = () => {
           <Message key={message.createdAt} message={message} />
         ))
       }
+      {
+        img &&
+        <div className="message max-w-[70%] flex gap-5 self-end">
+          <div className="texts flex-1 flex flex-col gap-1">
+            {img && <img src={img} alt="user" className="rounded-lg object-cover" />}
+          </div>
+        </div>
+      }
     </div>
   )
 }
 
-const Bottom = () => {
+const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<Img>>, img: Img }) => {
   const { currentUser } = useUserStore();
   const { chatId, user } = useChatStore();
 
@@ -94,9 +113,18 @@ const Bottom = () => {
     setOpenEmoji(false);
   };
 
+  const handleImg = (e: any) => {
+    if (e.target.files[0])
+      setImg({
+        file: e.target.files[0],
+        url: URL.createObjectURL(e.target.files[0])
+      });
+  };
 
   const handleSendText = async () => {
     if (text === "") return;
+
+    let imgUrl = null;
 
     if (chatId)
 
@@ -108,6 +136,7 @@ const Bottom = () => {
             senderId: currentUser.id,
             text,
             createdAt: new Date(),
+            ...(imgUrl != null && { img: imgUrl })
           })
         })
       } catch (err) {
@@ -135,6 +164,10 @@ const Bottom = () => {
       };
     });
 
+    setImg({
+      file: null,
+      url: "",
+    });
     setText("");
 
   };
@@ -143,7 +176,10 @@ const Bottom = () => {
   return (
     <div className="bottom mt-auto flex justify-between items-center gap-5 p-5 border-t border-neutral-800">
       <div className="icons flex gap-5">
+        <label htmlFor="file">
           <IconPhoto />
+        </label>
+        <input type="file" id="file" className="hidden" onChange={handleImg} />
         <IconCamera />
         <IconMicrophone />
       </div>
@@ -187,6 +223,9 @@ const Message = ({ message }: { message?: any }) => {
           (
             <div className="message self-end">
               <div className="texts flex-1 flex flex-col gap-1">
+                {message.img &&
+                  <img src={message.img} alt="user" className="rounded-lg object-cover" />
+                }
                 <p className="text-white bg-blue-900 p-5 rounded-lg">{message.text}</p>
                 {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
                 <span className="text-neutral-500 text-xs">12:00 PM</span>
@@ -196,20 +235,9 @@ const Message = ({ message }: { message?: any }) => {
             <div className="message">
               <img src="./img/avatar-placeholder.png" alt="user" className="w-7 h-7 rounded-full object-cover" />
               <div className="texts flex-1 flex flex-col gap-1">
-      <div className="message max-w-[70%] flex gap-5">
-        <img src="./img/avatar-placeholder.png" alt="user" className="w-7 h-7 rounded-full object-cover" />
-        <div className="texts flex-1 flex flex-col gap-1">
-          <p className="text-white bg-blue-950/30 p-5 rounded-lg">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore ducimus quae alias deserunt illum nisi id quo incidunt ex, exercitationem possimus laborum quos, voluptate nobis amet odit, dolores beatae sequi!</p>
-          <span className="text-neutral-500 text-xs">12:00 PM</span>
-        </div>
-      </div>
-      <div className="message max-w-[70%] flex gap-5 self-end">
-        <div className="texts flex-1 flex flex-col gap-1">
-          <img src="./img/photo-placeholder.png" alt="user" className="rounded-lg object-cover" />
-          <p className="text-white bg-blue-900 p-5 rounded-lg">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore ducimus quae alias deserunt illum nisi id quo incidunt ex, exercitationem possimus laborum quos, voluptate nobis amet odit, dolores beatae sequi!</p>
-          <span className="text-neutral-500 text-xs">12:00 PM</span>
-        </div>
-      </div>
+                {message.img &&
+                  <img src={message.img} alt="user" className="rounded-lg object-cover" />
+                }
                 <p className="text-white bg-blue-950/30 p-5 rounded-lg">{message.text}</p>
                 {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
                 <span className="text-neutral-500 text-xs">12:00 PM</span>
