@@ -1,31 +1,57 @@
 import { IconChevronDown } from "../icons/IconChevronDown"
 import { IconChevronUp } from "../icons/IconChevronUp"
 import { IconDownload } from "../icons/IconDownload"
-import { auth } from "../../lib/firebase"
+import { auth, db } from "../../lib/firebase"
+import { useChatStore } from "../../lib/chatStore"
+import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore"
+import { useUserStore } from "../../lib/userStore"
 
 export const Detail = () => {
+
+  const { currentUser } = useUserStore();
+  const { user, isCurrentUserBlocked, isReceiverBlocked, changeBlock } = useChatStore();
 
   const signOut = async () => {
     await auth.signOut();
   };
 
+  const handleBlock = async () => {
+    if (!user) return;
+
+    const userDocRef = doc(db, "users", currentUser.id);
+
+    try {
+      await updateDoc(userDocRef, {
+        blocked: isReceiverBlocked ? arrayRemove(user.id) : arrayUnion(user.id)
+      })
+      changeBlock();
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col h-screen">
       {/* CONTACT PROFILE */}
+
       <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
         <img src="./img/avatar-placeholder.png" alt="user" className="w-24 h-24 rounded-full object-cover" />
         <h2>Jane Doe</h2>
         <p className="text-neutral-500">Lorem ipsum dolor, sit amet.</p>
       </div>
+
       {/* CHAT MENU */}
       <div className="info p-5 flex-1 flex flex-col gap-7 overflow-auto">
         <Options />
         <div className="flex">
-          <button className="mt-1 text-red-500 w-fit mx-auto">Block User</button>
+          <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
+            {isCurrentUserBlocked ? 'You are Blocked!' : isReceiverBlocked ? 'User Blocked' : 'Block User'}
+          </button>
           <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
         </div>
       </div>
     </div>
+
   )
 }
 
