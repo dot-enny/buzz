@@ -103,7 +103,7 @@ const Center = ({ img }: { img: string }) => {
 
 const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<Img>>, img: Img }) => {
   const { currentUser } = useUserStore();
-  const { chatId, user } = useChatStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, } = useChatStore();
 
   const [openEmoji, setOpenEmoji] = useState(false);
   const [text, setText] = useState('');
@@ -183,10 +183,11 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
         <IconCamera />
         <IconMicrophone />
       </div>
-      <input type="text" placeholder="Type a message..."
-        className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg"
+      <input type="text" placeholder={isCurrentUserBlocked || isReceiverBlocked ? 'You cannot send a message' : 'Type a message...'}
+        className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
         value={text}
         onChange={(e) => setText(e.target.value)}
+        disabled={isCurrentUserBlocked || isReceiverBlocked}
       />
       <div className="emoji relative">
         <div onClick={() => setOpenEmoji(prev => !prev)}>
@@ -197,8 +198,8 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
         </div>
       </div>
       <button 
-        onClick={handleSendText}
-        className="bg-blue-900 text-white py-2 px-4 border-none rounded" 
+        onClick={handleSendText} disabled={isCurrentUserBlocked || isReceiverBlocked}
+        className="bg-blue-900 text-white py-2 px-4 border-none rounded disabled:opacity-50 disabled:cursor-not-allowed" 
       >
         Send
       </button>

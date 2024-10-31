@@ -7,6 +7,7 @@ interface ChatStore {
     isCurrentUserBlocked: boolean,
     isReceiverBlocked: boolean,
     changeChat: (chatId: string, user: any) => void;  
+    changeBlock: () => void;  
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -44,4 +45,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         }
         
     },
+    changeBlock: () => {
+      set(state => ({ ...state, isReceiverBlocked: !state.isReceiverBlocked }))
+    }
 }));
