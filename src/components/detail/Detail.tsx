@@ -35,8 +35,8 @@ export const Detail = () => {
       {/* CONTACT PROFILE */}
 
       <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
-        <img src="./img/avatar-placeholder.png" alt="user" className="w-24 h-24 rounded-full object-cover" />
-        <h2>Jane Doe</h2>
+        <img src={user ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-24 h-24 rounded-full object-cover" />
+        <h2>{user ? user.username : 'John Doe'}</h2>
         <p className="text-neutral-500">Lorem ipsum dolor, sit amet.</p>
       </div>
 
