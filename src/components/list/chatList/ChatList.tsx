@@ -102,9 +102,9 @@ const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
                 backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'    
             }}
         >
-            <img src={ userBlocked ? sender.avatar : './img/avatar-placeholder.png'} alt="user" className="w-12 h-12 rounded-full object-cover" />
+            <img src={ userBlocked ? './img/avatar-placeholder.png' : sender.avatar } alt="user" className="w-12 h-12 rounded-full object-cover" />
             <div>
-                <h2>{ userBlocked ? sender.username : 'User' }</h2>
+                <h2>{ userBlocked ? 'User' : sender.username }</h2>
                 <p className="text-neutral-500">{ chat.lastMessage }</p>
             </div>
         </div>
