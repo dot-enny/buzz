@@ -227,7 +227,7 @@ const Message = ({ message }: { message?: any }) => {
             <div className="message self-end">
               <div className="texts flex-1 flex flex-col gap-1">
                 {message.img &&
-                  <img src={message.img} alt="user" className="rounded-lg object-cover" />
+                  <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
                 }
                 <p className="text-white bg-blue-900 p-5 rounded-lg">{message.text}</p>
                 {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
@@ -239,7 +239,7 @@ const Message = ({ message }: { message?: any }) => {
               <img src="./img/avatar-placeholder.png" alt="user" className="w-7 h-7 rounded-full object-cover" />
               <div className="texts flex-1 flex flex-col gap-1">
                 {message.img &&
-                  <img src={message.img} alt="user" className="rounded-lg object-cover" />
+                  <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
                 }
                 <p className="text-white bg-blue-950/30 p-5 rounded-lg">{message.text}</p>
                 {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
