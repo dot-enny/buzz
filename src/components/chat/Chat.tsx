@@ -12,6 +12,7 @@ import { arrayUnion, doc, getDoc, onSnapshot, updateDoc } from "firebase/firesto
 import { db } from "../../lib/firebase"
 import { useUserStore } from "../../lib/userStore"
 import { upload } from "../../lib/upload"
+import { format } from "timeago.js"
 interface Img {
   file: File | null,
   url: string
@@ -230,8 +231,7 @@ const Message = ({ message }: { message?: any }) => {
                   <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
                 }
                 <p className="text-white bg-blue-900 p-5 rounded-lg">{message.text}</p>
-                {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
-                <span className="text-neutral-500 text-xs">12:00 PM</span>
+                <span className="text-neutral-500 text-xs">{format(message.createdAt.toDate())}</span>
               </div>
             </div>
           ) : (
@@ -242,8 +242,7 @@ const Message = ({ message }: { message?: any }) => {
                   <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
                 }
                 <p className="text-white bg-blue-950/30 p-5 rounded-lg">{message.text}</p>
-                {/* <span className="text-neutral-500 text-xs">{ message.createdAt }</span> */}
-                <span className="text-neutral-500 text-xs">12:00 PM</span>
+                <span className="text-neutral-500 text-xs">{format(message.createdAt.toDate())}</span>
               </div>
             </div>
           )
