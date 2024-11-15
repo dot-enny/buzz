@@ -18,7 +18,7 @@ export const ChatList = () => {
     const filteredChats = chats.filter((chat) => chat.user.username.toLowerCase().includes(input.toLowerCase()));
 
     const { currentUser } = useUserStore();
-    const { changeChat } = useChatStore();
+    const { changeChat, resetChat, chatId } = useChatStore();
 
     useEffect(() => {
         const unsub = onSnapshot(doc(db, "userchats", currentUser.id), async (res) => {
@@ -40,6 +40,10 @@ export const ChatList = () => {
     }, [currentUser.id]);
 
     const handleSelectChat = async (chat: any) => {
+        if(chatId === chat.chatId) return;
+
+        resetChat();
+
         const userChats = chats.map((item) => {
             const { user, ...rest } = item;
             return rest;
