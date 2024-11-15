@@ -213,12 +213,7 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
 const Message = ({ message }: { message?: any }) => {
 
   const { currentUser } = useUserStore();
-
-  const endRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
+  const { user } = useChatStore();
 
   return (
     <>
@@ -236,7 +231,7 @@ const Message = ({ message }: { message?: any }) => {
             </div>
           ) : (
             <div className="message self-start">
-              <img src="./img/avatar-placeholder.png" alt="user" className="w-7 h-7 rounded-full object-cover" />
+              <img src={ user ? user.avatar : './img/avatar-placeholder.png' } alt="user" className="w-7 h-7 rounded-full object-cover" />
               <div className="texts flex-1 flex flex-col gap-1">
                 {message.img &&
                   <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
