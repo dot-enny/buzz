@@ -36,7 +36,7 @@ export const Chat = () => {
         </>
       ) : (
         <h3 className="text-3xl m-auto text-neutral-800 font-semibold text-center max-w-[65%] leading-[1.3]">
-          Select a chat to display your messages here
+          Select a chat to see messages
         </h3>
       )
       }
