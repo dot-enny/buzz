@@ -7,14 +7,14 @@ import { getStorage } from "firebase/storage"
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_API_KEY,
-  authDomain: "react-chat-app-72301.firebaseapp.com",
-  projectId: "react-chat-app-72301",
-  storageBucket: "react-chat-app-72301.appspot.com",
-  messagingSenderId: "696950571746",
-  appId: "1:696950571746:web:f0b072dd7a6307164054bb"
-};
+// const firebaseConfig = {
+//   apiKey: import.meta.env.VITE_API_KEY,
+//   authDomain: "react-chat-app-72301.firebaseapp.com",
+//   projectId: "react-chat-app-72301",
+//   storageBucket: "react-chat-app-72301.appspot.com",
+//   messagingSenderId: "696950571746",
+//   appId: "1:696950571746:web:f0b072dd7a6307164054bb"
+// };
 
 export const auth = getAuth();
 export const db = getFirestore();
