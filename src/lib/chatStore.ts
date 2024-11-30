@@ -7,6 +7,8 @@ interface ChatStore {
     isCurrentUserBlocked: boolean,
     isReceiverBlocked: boolean,
     changeChat: (chatId: string, user: any) => void;  
+    resetChat: () => void;
+    changeBlock: () => void;  
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -18,7 +20,7 @@ export const useChatStore = create<ChatStore>((set) => ({
         const currentUser = useUserStore.getState().currentUser;
 
         // CHECK IF USER IS BLOCKED
-        if(user.blocked.includes(currentUser.id)) {
+        if (user.blocked.includes(currentUser.id)) {
             return set({
                 chatId,
                 user: null,
@@ -27,7 +29,7 @@ export const useChatStore = create<ChatStore>((set) => ({
             });
         }
         // CHECK IF RECEIVER IS BLOCKED
-        else if(currentUser.blocked.includes(user.id)) {
+        else if (currentUser.blocked.includes(user.id)) {
             return set({
                 chatId,
                 user: null,
@@ -42,5 +44,13 @@ export const useChatStore = create<ChatStore>((set) => ({
                 isReceiverBlocked: false,
             });
         };
+    },
+    resetChat: () => {
+        set({
+            chatId: null,
+            user: null,
+            isCurrentUserBlocked: false,
+            isReceiverBlocked: false,
+        });
     },
 }));
