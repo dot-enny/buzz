@@ -99,6 +99,7 @@ const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
     const sender = chat.user;
     const { currentUser } = useUserStore();
     const userBlocked = sender.blocked.includes(currentUser.id);
+    const lastMessagePreview = chat.lastMessage.slice(0, 30);
     
     return (
         <div onClick={onClick} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
@@ -109,7 +110,7 @@ const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
             <img src={ userBlocked ? './img/avatar-placeholder.png' : sender.avatar } alt="user" className="w-12 h-12 rounded-full object-cover" />
             <div>
                 <h2>{ userBlocked ? 'User' : sender.username }</h2>
-                <p className="text-neutral-500">{ chat.lastMessage }</p>
+                <p className="text-neutral-500">{ lastMessagePreview }{ lastMessagePreview.length >= 30 ? '...' : '' }</p>
             </div>
         </div>
     )
