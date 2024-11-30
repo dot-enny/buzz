@@ -43,8 +43,7 @@ export const useChatStore = create<ChatStore>((set) => ({
                 isCurrentUserBlocked: false,
                 isReceiverBlocked: false,
             });
-        }
-        
+        };
     },
     resetChat: () => {
         set({

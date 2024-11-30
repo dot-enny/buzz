@@ -3,32 +3,67 @@ import { IconChevronUp } from "../icons/IconChevronUp"
 import { IconDownload } from "../icons/IconDownload"
 import { auth, db } from "../../lib/firebase"
 import { useChatStore } from "../../lib/chatStore"
-import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore"
+import { arrayRemove, arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore"
 import { useUserStore } from "../../lib/userStore"
 
 export const Detail = () => {
 
-  const { currentUser } = useUserStore();
-  const { user, isCurrentUserBlocked, isReceiverBlocked, changeBlock } = useChatStore();
+  const { currentUser, fetchUserInfo } = useUserStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, changeChat } = useChatStore();
 
   const signOut = async () => {
     await auth.signOut();
   };
 
   const handleBlock = async () => {
-    if (!user) return;
+    if(!chatId) return;
 
     const userDocRef = doc(db, "users", currentUser.id);
 
-    try {
-      await updateDoc(userDocRef, {
-        blocked: isReceiverBlocked ? arrayRemove(user.id) : arrayUnion(user.id)
-      })
-      changeBlock();
-    } catch (err) {
-      console.log(err);
-    }
-  }
+    const toggleBlock = async (blockValue: ('block' | 'unblock'), id: string) => {
+      try {
+        await updateDoc(userDocRef, {
+          blocked: blockValue === 'block' ? arrayUnion(id) : arrayRemove(id)
+        });
+        refetchUserInfo(id);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    const chatRef = doc(db, "chats", chatId);
+    const chatDocSnap = await getDoc(chatRef);
+    const chatData = chatDocSnap.data();
+
+    const refetchUserInfo = async (blockedUserId: string) => {
+      fetchUserInfo(currentUser.id);
+      const receiverDocRef = doc(db, "users", blockedUserId);
+      const receiverDocSnap = await getDoc(receiverDocRef);
+      const user = receiverDocSnap.data();
+      changeChat(chatId, user);
+    };
+
+    // UNBLOCK USER
+    if (!user) {
+      if(!chatData) return;
+      const blockedUser = chatData.messages.find((chat: any) => chat.senderId != currentUser.id);
+      toggleBlock('unblock', blockedUser.senderId);
+      return;
+    };
+
+    // BLOCK USER
+    toggleBlock('block', user.id);
+  };
+
+  if(!chatId) {
+    return (
+      <div className="flex-1 flex flex-col h-screen">
+          <h3 className="text-3xl m-auto text-neutral-800 font-semibold text-center max-w-[80%] leading-[1.3]">
+          Select a chat to see chat details
+        </h3>
+      </div>
+    )
+  };
 
   return (
     <div className="flex-1 flex flex-col h-screen">
