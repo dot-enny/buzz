@@ -242,8 +242,6 @@ const Message = ({ message }: { message?: any }) => {
             </div>
           )
       }
-
-      <div ref={endRef} />
     </>
   )
 }
