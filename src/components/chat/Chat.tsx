@@ -215,6 +215,12 @@ const Message = ({ message }: { message?: any }) => {
   const { currentUser } = useUserStore();
   const { user } = useChatStore();
 
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
+
   return (
     <>
       {
@@ -242,6 +248,8 @@ const Message = ({ message }: { message?: any }) => {
             </div>
           )
       }
+      
+      <div ref={endRef} />
     </>
   )
 }
