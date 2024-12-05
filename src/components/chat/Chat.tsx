@@ -20,7 +20,7 @@ interface Img {
 
 export const Chat = () => {
   const { chatId } = useChatStore();
-  
+
   const [img, setImg] = useState<Img>({
     file: null,
     url: "",
@@ -74,6 +74,12 @@ const Center = ({ img }: { img: string }) => {
 
   const messages = chat?.messages;
 
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
   useEffect(() => {
     if (chatId) {
       const unSub = onSnapshot(
@@ -87,21 +93,24 @@ const Center = ({ img }: { img: string }) => {
   }, [chatId]);
 
   return (
-    <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
-      {messages &&
-        messages.map((message: any) => (
-          <Message key={message.createdAt} message={message} />
-        ))
-      }
-      {
-        img &&
-        <div className="message max-w-[70%] flex gap-5 self-end">
-          <div className="texts flex-1 flex flex-col gap-1">
-            {img && <img src={img} alt="user" className="rounded-lg object-cover" />}
+    <>
+      <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
+        {messages &&
+          messages.map((message: any) => (
+            <Message key={message.createdAt} message={message} />
+          ))
+        }
+        {
+          img &&
+          <div className="message max-w-[70%] gap-5 self-end">
+            <div className="texts flex-1 flex flex-col gap-1">
+              {img && <img src={img} alt="user" className="rounded-lg object-cover" />}
+            </div>
           </div>
-        </div>
-      }
-    </div>
+        }
+        <div ref={endRef} className="" />
+      </div>
+    </>
   )
 }
 
@@ -142,38 +151,37 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
             createdAt: new Date(),
             ...(imgUrl != null && { img: imgUrl })
           })
-        })
+        });
+
+        const userIDs = [currentUser.id, user.id];
+
+        userIDs.forEach(async (id) => {
+          const userChatsRef = doc(db, "userchats", id);
+          const userChatsSnapshot = await getDoc(userChatsRef);
+
+          if (userChatsSnapshot.exists()) {
+            const userChatsData = userChatsSnapshot.data();
+            const chatIndex = userChatsData.chats.findIndex((chat: any) => chat.chatId === chatId);
+
+            userChatsData.chats[chatIndex].lastMessage = text;
+            userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+            userChatsData.chats[chatIndex].updatedAt = Date.now();
+
+            await updateDoc(userChatsRef, {
+              chats: userChatsData.chats,
+            });
+          };
+        });
+
       } catch (err) {
         console.log(err)
-      };
-
-
-    const userIDs = [currentUser.id, user.id];
-
-    userIDs.forEach(async (id) => {
-      const userChatsRef = doc(db, "userchats", id);
-      const userChatsSnapshot = await getDoc(userChatsRef);
-
-      if (userChatsSnapshot.exists()) {
-        const userChatsData = userChatsSnapshot.data();
-        const chatIndex = userChatsData.chats.findIndex((chat: any) => chat.chatId === chatId);
-
-        userChatsData.chats[chatIndex].lastMessage = text;
-        userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
-        userChatsData.chats[chatIndex].updatedAt = Date.now();
-
-        await updateDoc(userChatsRef, {
-          chats: userChatsData.chats,
+      } finally {
+        setImg({
+          file: null,
+          url: "",
         });
+        setText("");
       };
-    });
-
-    setImg({
-      file: null,
-      url: "",
-    });
-    setText("");
-
   };
 
   return (
@@ -200,9 +208,9 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
           <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
         </div>
       </div>
-      <button 
+      <button
         onClick={handleSendText} disabled={isCurrentUserBlocked || isReceiverBlocked}
-        className="bg-blue-900 text-white py-2 px-4 border-none rounded disabled:opacity-50 disabled:cursor-not-allowed" 
+        className="bg-blue-900 text-white py-2 px-4 border-none rounded disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Send
       </button>
@@ -214,12 +222,6 @@ const Message = ({ message }: { message?: any }) => {
 
   const { currentUser } = useUserStore();
   const { user } = useChatStore();
-
-  const endRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
 
   return (
     <>
@@ -248,8 +250,6 @@ const Message = ({ message }: { message?: any }) => {
             </div>
           )
       }
-      
-      <div ref={endRef} />
     </>
   )
 }
