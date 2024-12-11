@@ -198,6 +198,7 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
         className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
         disabled={isCurrentUserBlocked || isReceiverBlocked}
       />
       <div className="emoji relative">
