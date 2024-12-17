@@ -7,7 +7,7 @@ export const AddUser = () => {
 
     const { currentUser } = useUserStore();
 
-    const [user, setUser] = useState<any>(null);
+    const [users, setUsers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isAddingUser, setIsAddingUser] = useState(false);
 
@@ -19,12 +19,14 @@ export const AddUser = () => {
 
         try {
             const userRef = collection(db, "users");
-            const userQuery = query(userRef, where("username", "==", username));
+            const userQuery = query(userRef, where("username", ">=", username), where("username", "<=", username + '\uf8ff'));
 
             const querySnapshot = await getDocs(userQuery);
 
             if (!querySnapshot.empty) {
-                setUser(querySnapshot.docs[0].data());
+                setUsers(querySnapshot.docs.map(doc => doc.data()));
+            } else {
+                setUsers([]);
             }
         } catch (err) {
             console.log(err)
@@ -33,7 +35,7 @@ export const AddUser = () => {
         }
     };
 
-    const handleAddUser = async () => {
+    const handleAddUser = async (user: any) => {
         
         const chatRef = collection(db, "chats");
         const userChatsRef = collection(db, "userchats");
@@ -80,19 +82,22 @@ export const AddUser = () => {
                 </button>
             </form>
             {
-                user &&
-                <div className="mt-12 flex justify-between items-center">
-                    <div className="flex items-center gap-5">
-                        <img src={user.avatar || '/img/avatar-placeholder.png'} alt="" className="w-14 h-14 rounded-full object-cover" />
-                        <span>{user.username}</span>
-                    </div>
-                    <button className="bg-blue-900 py-2 px-3 rounded-lg relative" onClick={handleAddUser}>
-                        <span className={`${isAddingUser ? 'visible' : 'invisible'} absolute inset-x-0 mb-2`}>...</span>
-                        <span className={!isAddingUser ? 'visible' : 'invisible'}>Add User</span>
-                    </button>
+                users.length > 0 &&
+                <div className="mt-12">
+                    {users.map(user => (
+                        <div key={user.id} className="flex justify-between items-center mt-4">
+                            <div className="flex items-center gap-5">
+                                <img src={user.avatar || '/img/avatar-placeholder.png'} alt="" className="w-14 h-14 rounded-full object-cover" />
+                                <span>{user.username}</span>
+                            </div>
+                            <button className="bg-blue-900 py-2 px-3 rounded-lg relative" onClick={() => handleAddUser(user)}>
+                                <span className={`${isAddingUser ? 'visible' : 'invisible'} absolute inset-x-0 mb-2`}>...</span>
+                                <span className={!isAddingUser ? 'visible' : 'invisible'}>Add User</span>
+                            </button>
+                        </div>
+                    ))}
                 </div>
             }
         </div>
     )
 }
-
