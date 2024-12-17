@@ -245,7 +245,7 @@ const Message = ({ message }: { message?: any }) => {
                 {message.img &&
                   <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
                 }
-                <p className="text-white bg-blue-950/30 p-5 rounded-lg">{message.text}</p>
+                <p className="text-white bg-blue-950/30 p-5 rounded-lg break-all">{message.text}</p>
                 <span className="text-neutral-500 text-xs">{format(message.createdAt.toDate())}</span>
               </div>
             </div>
