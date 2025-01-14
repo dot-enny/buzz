@@ -10,7 +10,6 @@ export const useAddUser = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [addingUserId, setAddingUserId] = useState<string | null>(null);
-    const [isUserAlreadyAdded, setIsUserAlreadyAdded] = useState<boolean>(false);
 
     const searchUser = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -94,5 +93,5 @@ export const useAddUser = () => {
         }
     };
 
-    return { users, isLoading, addingUserId, addUser, searchUser, isUserAlreadyAdded };
+    return { users, isLoading, addingUserId, addUser, searchUser };
 }
