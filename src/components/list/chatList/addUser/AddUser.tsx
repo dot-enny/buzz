@@ -5,71 +5,6 @@ export const AddUser = () => {
 
     const { searchUser, isLoading, addUser, addingUserId, users } = useAddUser()
 
-    const [users, setUsers] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isAddingUser, setIsAddingUser] = useState(false);
-
-    const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
-        const formData = new FormData(e.target as HTMLFormElement);
-        const username = formData.get("username");
-
-        try {
-            const userRef = collection(db, "users");
-            const userQuery = query(userRef, where("username", ">=", username), where("username", "<=", username + '\uf8ff'));
-
-            const querySnapshot = await getDocs(userQuery);
-
-            if (!querySnapshot.empty) {
-                setUsers(querySnapshot.docs.map(doc => doc.data()));
-            } else {
-                setUsers([]);
-            }
-        } catch (err) {
-            console.log(err)
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleAddUser = async (user: any) => {
-        
-        const chatRef = collection(db, "chats");
-        const userChatsRef = collection(db, "userchats");
-        setIsAddingUser(true);
-
-        try {
-            const newChatRef = doc(chatRef);
-
-            await setDoc(newChatRef, {
-                createdAt: serverTimestamp(),
-                messages: [],
-            });
-
-            await updateDoc(doc(userChatsRef, user.id), {
-                chats: arrayUnion({
-                    chatId: newChatRef.id,
-                    lastMessage: "",
-                    receiverId: currentUser.id
-                })
-            });
-
-            await updateDoc(doc(userChatsRef, currentUser.id), {
-                chats: arrayUnion({
-                    chatId: newChatRef.id,
-                    lastMessage: "",
-                    receiverId: user.id
-                })
-            });
-
-        } catch (err) {
-            console.log(err);
-        } finally {
-            setIsAddingUser(false);
-        }
-    };
-
     return (
         <div className="absolute inset-0 w-max h-max m-auto p-7 bg-neutral-900 rounded-lg">
             <SearchBar searchUser={searchUser} isLoading={isLoading} />
@@ -80,6 +15,7 @@ export const AddUser = () => {
                         <React.Fragment key={user.id}>
                             <UserItem user={user} handleAddUser={addUser} isAddingUser={addingUserId === user.id} />
                         </React.Fragment>
+                    ))}
                 </div>
             }
         </div>
