@@ -46,7 +46,6 @@ export const useAddUser = () => {
     };
 
     const addUser = async (user: User) => {
-        console.log(user);
         setAddingUserId(user.id);
         const chatRef = collection(db, "chats");
         const userChatsRef = collection(db, "userchats");

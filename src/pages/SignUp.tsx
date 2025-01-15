@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth, db } from "../lib/firebase";
@@ -8,10 +8,25 @@ import { upload } from "../lib/upload";
 
 export const SignUp = () => {
 
-	const [avatar, setAvatar] = useState({
+	const [avatar, setAvatar] = useState<{
+		file: File | null,
+		url: string
+	}>({
 		file: null,
-		url: ""
+		url: "/img/avatar-placeholder.png"
 	});
+
+	useEffect(() => {
+		if (!avatar.file) {
+			fetch(avatar.url)
+				.then(res => res.blob())
+				.then(blob => {
+					const file = new File([blob], "avatar-placeholder.png", { type: "image/png" });
+					setAvatar(prev => ({ ...prev, file }));
+				});
+		}
+	}, []);
+
 	const [isLoading, setIsLoading] = useState(false);
 
 	const handleAvatar = (e: any) => {
