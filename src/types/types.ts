@@ -3,7 +3,8 @@ interface User {
     blocked: string[] | [],
     email: string,
     id: string,
-    usernname: string
+    username: string,
+    status: string
 }
 
 interface Chat {
@@ -11,4 +12,9 @@ interface Chat {
     lastMessage: string,
     receiverId: string,
     isSeen: boolean
+}
+
+interface Avatar {
+    file: File | null,
+    url: string
 }
