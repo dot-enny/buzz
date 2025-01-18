@@ -8,7 +8,7 @@
     box-sizing: border-box;
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
     scrollbar-width: thin;
-    scrollbar-color: #131313 transparent;
+    scrollbar-color: transparent transparent;
 }
 body {
     background: #0a0a0a;
@@ -43,6 +43,12 @@ body {
 
 .message {
     @apply max-w-[70%] flex gap-5;
+}
+
+.frosted-glass {
+    @apply bg-[#0a0a0a] bg-opacity-90 backdrop-filter backdrop-blur-md;
+    /* backdrop-filter: blur (6px);
+    -webkit-backdrop-filter: blur (6px); */
 }
 
 

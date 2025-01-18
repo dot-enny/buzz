@@ -51,10 +51,10 @@ const Top = () => {
   return (
     <div className="top p-5 flex justify-between items-center border-b border-neutral-800">
       <div className="user flex items-center gap-5">
-        <img src={ user ? user.avatar : './img/avatar-placeholder.png' } alt="user" className="w-14 h-14 rounded-full object-cover" />
+        <img src={ user.avatar } alt="user" className="w-14 h-14 rounded-full object-cover" />
         <div className="texts flex flex-col gap-1">
-          <span className="text-lg font-bold">{user ? user.username: ''}</span>
-          <p className="text-sm font-light text-neutral-500">Lorem ipsum dolor, sit amet.</p>
+          <span className="text-lg font-bold">{user.username}</span>
+          <p className="text-sm font-light text-neutral-500">{user.status}</p>
         </div>
       </div>
       <div className="actions flex gap-5">
@@ -191,24 +191,45 @@ const Bottom = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<I
           <IconPhoto />
         </label>
         <input type="file" id="file" className="hidden" onChange={handleImg} />
-        <IconCamera />
-        <IconMicrophone />
+        {/* <IconCamera />
+        <IconMicrophone /> */}
+        <div className="emoji relative">
+          <div onClick={() => setOpenEmoji(prev => !prev)}>
+            <IconEmoji />
+          </div>
+          <div className="absolute bottom-12 left-0">
+            <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
+          </div>
+        </div>
       </div>
-      <input type="text" placeholder={isCurrentUserBlocked || isReceiverBlocked ? 'You cannot send a message' : 'Type a message...'}
+      {/* <input type="text" placeholder={isCurrentUserBlocked || isReceiverBlocked ? 'You cannot send a message' : 'Type a message...'}
         className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
         disabled={isCurrentUserBlocked || isReceiverBlocked}
+      /> */}
+      <textarea placeholder={isCurrentUserBlocked || isReceiverBlocked ? 'You cannot send a message' : 'Type a message...'} rows={1}
+        className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendText();
+          }
+        }}
+        disabled={isCurrentUserBlocked || isReceiverBlocked}
+        
       />
-      <div className="emoji relative">
+      {/* <div className="emoji relative">
         <div onClick={() => setOpenEmoji(prev => !prev)}>
           <IconEmoji />
         </div>
         <div className="absolute bottom-12 left-0">
           <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
         </div>
-      </div>
+      </div> */}
       <button
         onClick={handleSendText} disabled={isCurrentUserBlocked || isReceiverBlocked}
         className="bg-blue-900 text-white py-2 px-4 border-none rounded disabled:opacity-50 disabled:cursor-not-allowed"
@@ -240,7 +261,7 @@ const Message = ({ message }: { message?: any }) => {
             </div>
           ) : (
             <div className="message self-start">
-              <img src={ user ? user.avatar : './img/avatar-placeholder.png' } alt="user" className="w-7 h-7 rounded-full object-cover" />
+              <img src={user ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-7 h-7 rounded-full object-cover" />
               <div className="texts flex-1 flex flex-col gap-1">
                 {message.img &&
                   <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
