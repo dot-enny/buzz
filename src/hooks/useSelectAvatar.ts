@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 
 export const useSelectAvatar = () => {
 
-    const [avatar, setAvatar] = useState<{
-        file: File | null,
-        url: string
-    }>({
+    const [avatar, setAvatar] = useState<Avatar>({
         file: null,
         url: "/img/avatar-placeholder.png"
     });
