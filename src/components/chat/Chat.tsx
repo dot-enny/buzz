@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import { IconCamera } from "../icons/IconCamera"
 import { IconEmoji } from "../icons/IconEmoji"
 import { IconInfo } from "../icons/IconInfo"
-import { IconMicrophone } from "../icons/IconMicrophone"
 import { IconPhone } from "../icons/IconPhone"
 import { IconPhoto } from "../icons/IconPhoto"
 import { IconVideo } from "../icons/IconVideo"
