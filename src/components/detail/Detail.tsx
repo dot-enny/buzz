@@ -16,7 +16,7 @@ export const Detail = () => {
   };
 
   const handleBlock = async () => {
-    if(!chatId) return;
+    if (!chatId) return;
 
     const userDocRef = doc(db, "users", currentUser.id);
 
@@ -45,7 +45,7 @@ export const Detail = () => {
 
     // UNBLOCK USER
     if (!user) {
-      if(!chatData) return;
+      if (!chatData) return;
       const blockedUser = chatData.messages.find((chat: any) => chat.senderId != currentUser.id);
       toggleBlock('unblock', blockedUser.senderId);
       return;
@@ -55,40 +55,44 @@ export const Detail = () => {
     toggleBlock('block', user.id);
   };
 
-  if(!chatId) {
-    return (
-      <div className="flex-1 flex flex-col h-screen">
-          <h3 className="text-3xl m-auto text-neutral-800 font-semibold text-center max-w-[80%] leading-[1.3]">
-          Select a chat to see chat details
-        </h3>
-      </div>
-    )
-  };
-
   return (
-    <div className="flex-1 flex flex-col h-screen">
+    <div className="flex-1 flex flex-col h-screen relative">
       {/* CONTACT PROFILE */}
-
-      <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
-        <img src={user ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-24 h-24 rounded-full object-cover" />
-        <h2>{user ? user.username : 'John Doe'}</h2>
-        <p className="text-neutral-500">Lorem ipsum dolor, sit amet.</p>
-      </div>
+      {
+        !chatId ? (
+          <div className="flex-1 flex flex-col h-screen">
+            <h3 className="text-3xl m-auto text-neutral-800 font-semibold text-center max-w-[80%] leading-[1.3]">
+              Select a chat to see chat details
+            </h3>
+          </div>
+        ) : (
+          <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
+            <img src={user.avatar} alt="user" className="w-24 h-24 rounded-full object-cover" />
+            <h2>{user.username}</h2>
+            <p className="text-neutral-500">{user.status}</p>
+          </div>
+        )
+      }
 
       {/* CHAT MENU */}
-      <div className="info p-5 flex-1 flex flex-col gap-7 overflow-auto">
-        <Options />
-        <div className="flex">
-          <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
-            {isCurrentUserBlocked ? 'You are Blocked!' : isReceiverBlocked ? 'User Blocked' : 'Block User'}
-          </button>
-          <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
+      <div className="info p-5 flex-1 flex flex-col gap-7 overflow-y-auto">
+        { chatId && <Options /> }
+        <div className="absolute bottom-0 inset-x-0 frosted-glass py-5">
+          <div className="flex">
+            { chatId && 
+              <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
+                {isCurrentUserBlocked ? 'You are Blocked!' : isReceiverBlocked ? 'User Blocked' : 'Block User'}
+              </button>
+            }
+            <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
+          </div>
         </div>
       </div>
     </div>
 
   )
 }
+
 
 const Options = () => {
   return (
