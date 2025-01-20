@@ -2,16 +2,9 @@
 
 import { useEffect } from 'react'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { ArrowPathIcon, MinusCircleIcon, PlusCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { classNames } from '../../../../utils/helpers'
+import { ArrowPathIcon, CheckBadgeIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAddUser } from '../../../../hooks/useAddUser'
 import Tooltip from '../../../ui/Tooltip'
-
-const tabs = [
-  { name: 'All', href: '#', current: true },
-  { name: 'Online', href: '#', current: false },
-  { name: 'Offline', href: '#', current: false },
-]
 
 export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (val: boolean) => void }) {
 
@@ -37,8 +30,7 @@ export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
             >
               <div className="flex h-full flex-col overflow-y-scroll bg-neutral-900 shadow-xl">
                 <DrawerHeader setIsOpen={setIsOpen} />
-                <Tabs />
-                <TeamList users={users} addUser={addUser} addingUserId={addingUserId} />
+                <UserList users={users} addUser={addUser} addingUserId={addingUserId} />
               </div>
             </DialogPanel>
           </div>
@@ -51,31 +43,33 @@ export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
 const DrawerHeader = ({ setIsOpen }: { setIsOpen: (val: boolean) => void }) => (
   <div className="p-6">
     <div className="flex items-start justify-between">
-      <DialogTitle className="text-base font-semibold">Team</DialogTitle>
+      <DialogTitle className="text-base font-semibold">Add or block users on buzz</DialogTitle>
       <div className="ml-3 flex h-7 items-center">
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="relative rounded-md hover:text-gray-500 focus:ring-2 focus:ring-indigo-500"
-        >
-          <span className="absolute -inset-2.5" />
-          <span className="sr-only">Close panel</span>
-          <XMarkIcon aria-hidden="true" className="size-6" />
-        </button>
+        <Tooltip tip="Close panel" className="-left-10">
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="relative rounded-md hover:text-gray-500 focus:ring-2 focus:ring-indigo-500"
+          >
+            <span className="absolute -inset-2.5" />
+            <span className="sr-only">Close panel</span>
+            <XMarkIcon aria-hidden="true" className="size-6" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   </div>
 )
 
-const TeamList = ({ users, addUser, addingUserId }: { users: (User & { isAdded: boolean })[], addUser: (val: User) => void, addingUserId: string | null }) => (
+const UserList = ({ users, addUser, addingUserId }: { users: (User & { isAdded: boolean })[], addUser: (val: User) => void, addingUserId: string | null }) => (
   <ul role="list" className="flex-1 divide-y divide-gray-200 overflow-y-auto">
     {users.map((user) => (
-      <TeamListItem key={user.id} user={user} addUser={addUser} isAddingUserId={addingUserId == user.id} />
+      <UserListItem key={user.id} user={user} addUser={addUser} isAddingUserId={addingUserId == user.id} />
     ))}
   </ul>
 )
 
-const TeamListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdded: boolean }, addUser: (val: User) => void, isAddingUserId: boolean }) => (
+const UserListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdded: boolean }, addUser: (val: User) => void, isAddingUserId: boolean }) => (
   <li>
     <div className="group relative flex items-center px-5 py-6 hover:bg-gray-800/30">
       <div className="-m-1 block flex-1 p-1">
@@ -86,14 +80,12 @@ const TeamListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdde
         </div>
       </div>
       {/* <DrawerTeamListItemMenu /> */}
-      <button onClick={() => addUser(user)}>
+      <button onClick={() => !user.isAdded ? addUser(user) : null}>
         { user.isAdded ? 
-        <Tooltip tip="Remove User" className="-left-10">
-          <MinusCircleIcon className="text-white size-7 hover:animate-pulse" />
-        </Tooltip>
+          <CheckBadgeIcon className="text-white size-7 cursor-default" />
           : isAddingUserId ? <ArrowPathIcon className="text-white size-7 animate-spin" /> :
-          <Tooltip tip="Add User" className="-left-5">
-            <PlusCircleIcon className="text-white size-7 hover:animate-pulse" />
+          <Tooltip tip="add user" className="-left-5">
+            <PlusIcon className="text-white size-6" />
           </Tooltip>
         }
       </button>
@@ -103,7 +95,7 @@ const TeamListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdde
 
 const TeamListItemImage = ({ user }: { user: User }) => (
   <span className="relative inline-block shrink-0">
-    <img alt="" src={user.avatar} className="size-10 rounded-full" />
+    <img alt="" src={user.avatar} className="size-10 rounded-full object-cover" />
     {/* <span
       aria-hidden="true"
       className={classNames(
@@ -121,28 +113,3 @@ const TeamListItemDetails = ({ user }: { user: User }) => (
   </div>
 )
 
-
-const Tabs = () => {
-  return (
-    <div className="border-b border-gray-200">
-      <div className="px-6">
-        <nav className="-mb-px flex space-x-6">
-          {tabs.map((tab) => (
-            <a
-              key={tab.name}
-              href={tab.href}
-              className={classNames(
-                tab.current
-                  ? 'border-indigo-500 text-indigo-500'
-                  : 'border-transparent hover:border-gray-300 hover:text-gray-700',
-                'whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium',
-              )}
-            >
-              {tab.name}
-            </a>
-          ))}
-        </nav>
-      </div>
-    </div>
-  )
-}

@@ -103,37 +103,6 @@ export const useAddUser = () => {
         }
     };
 
-    const removeUser = async (user: User) => {
-        setAddingUserId(user.id);
-        const userChatsRef = collection(db, "userchats");
-
-        try {
-            const userChatsDoc = await getDoc(doc(userChatsRef, currentUser.id));
-            if (userChatsDoc.exists()) {
-                const userChats = userChatsDoc.data().chats;
-                const chatToRemove = userChats.find((chat: Chat) => chat.receiverId === user.id);
-
-                if (chatToRemove) {
-                    await updateDoc(doc(userChatsRef, currentUser.id), {
-                        chats: userChats.filter((chat: Chat) => chat.receiverId !== user.id)
-                    });
-
-                    const otherUserChatsDoc = await getDoc(doc(userChatsRef, user.id));
-                    if (otherUserChatsDoc.exists()) {
-                        const otherUserChats = otherUserChatsDoc.data().chats;
-                        await updateDoc(doc(userChatsRef, user.id), {
-                            chats: otherUserChats.filter((chat: Chat) => chat.receiverId !== currentUser.id)
-                        });
-                    }
-                }
-            }
-        } catch (err) {
-            console.log(err);
-        } finally {
-            setAddingUserId(null);
-        }
-    };
-
     const checkIfUserIsAlreadyAdded = async (userId: string) => {
         const userChatsRef = doc(db, "userchats", currentUser.id);
         const userChatsDoc = await getDoc(userChatsRef);
