@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
-import { IconPlus } from "../../icons/IconPlus"
 import { IconSearch } from "../../icons/IconSearch"
-import { IconMinus } from "../../icons/IconMinus";
-import { AddUser } from "./addUser/AddUser";
 import { db } from "../../../lib/firebase";
 import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useUserStore } from "../../../lib/userStore";
 import { useChatStore } from "../../../lib/chatStore";
+import { UserPlusIcon } from "@heroicons/react/24/outline";
+import AddUser from "./addUser/AddUser";
 
 
 export const ChatList = () => {
 
-    const [addMode, setAddMode] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const [chats, setChats] = useState<any[]>([]);
     const [input, setInput] = useState('');
 
@@ -75,9 +74,9 @@ export const ChatList = () => {
                         className="bg-transparent border-none outline-none text-white" 
                     />
                 </div>
-                <div onClick={() => setAddMode((prev) => !prev)} className="cursor-pointer">
-                    {addMode ? <IconMinus /> : <IconPlus />}
-                </div>
+                <button onClick={() => setIsOpen((prev) => !prev)} className="cursor-pointer">
+                    <UserPlusIcon className="text-white size-6" />
+                </button>
             </div>
 
             {
@@ -88,7 +87,7 @@ export const ChatList = () => {
             }
 
             <>
-                { addMode && <AddUser /> }
+                <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
             </>
         </div>
     )

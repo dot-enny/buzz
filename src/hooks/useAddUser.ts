@@ -1,5 +1,5 @@
 import { collection, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, getDocs, query, where, getDoc } from "firebase/firestore";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { db } from "../lib/firebase";
 import { useUserStore } from "../lib/userStore";
 
@@ -11,12 +11,7 @@ export const useAddUser = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [addingUserId, setAddingUserId] = useState<string | null>(null);
 
-    const searchUser = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
-        const formData = new FormData(e.target as HTMLFormElement);
-        const username = formData.get("username");
-
+    const searchUser = async (username: string) => {
         try {
             const userRef = collection(db, "users");
             const userQuery = query(
@@ -25,6 +20,31 @@ export const useAddUser = () => {
                 where("username", "<=", username + '\uf8ff'),
                 where("username", "!=", currentUser.username)
             );
+
+            const querySnapshot = await getDocs(userQuery);
+
+            if (!querySnapshot.empty) {
+                const allUsers = await Promise.all(querySnapshot.docs.map(async (doc) => {
+                    const user = doc.data();
+                    const isAdded = await checkIfUserIsAlreadyAdded(user.id);
+                    return { ...user, isAdded };
+                }));
+                setUsers(allUsers);
+            } else {
+                setUsers([]);
+            }
+        } catch (err) {
+            console.log(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const userRef = collection(db, "users");
+            const userQuery = query(userRef, where("username", "!=", currentUser.username));
 
             const querySnapshot = await getDocs(userQuery);
 
@@ -74,6 +94,8 @@ export const useAddUser = () => {
                 })
             });
 
+            fetchUsers();
+
         } catch (err) {
             console.log(err);
         } finally {
@@ -92,5 +114,5 @@ export const useAddUser = () => {
         }
     };
 
-    return { users, isLoading, addingUserId, addUser, searchUser };
+    return { users, isLoading, addingUserId, addUser, fetchUsers, searchUser };
 }
