@@ -8,11 +8,13 @@
     box-sizing: border-box;
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
     scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
+    scrollbar-color: #171717 transparent;
 }
 body {
     background: #0a0a0a;
     color: white;
+    min-width: 100dvw;
+    min-height: 100dvh;
 }
 
 .auth-form {
