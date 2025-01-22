@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, getDocs, query, where, getDoc, onSnapshot } from "firebase/firestore";
+import { collection, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, getDocs, query, where, getDoc } from "firebase/firestore";
 import { useState } from "react";
 import { db } from "../lib/firebase";
 import { useUserStore } from "../lib/userStore";
