@@ -1,13 +1,39 @@
 import EmojiPicker from "emoji-picker-react";
 import { useChatStore } from "../../../lib/chatStore";
-import { IconEmoji } from "../../icons/IconEmoji";
-import { IconPhoto } from "../../icons/IconPhoto";
 import { Img } from "../Chat";
 import { useComposeMessage } from "../../../hooks/chat/useComposeMessage";
-import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { FaceSmileIcon, PaperAirplaneIcon, PhotoIcon } from "@heroicons/react/24/outline";
 
+interface ComposeMessageProps {
+    setImg: React.Dispatch<React.SetStateAction<Img>>;
+    img: Img;
+}
 
-export const ComposeMessage = ({ setImg, img }: { setImg: React.Dispatch<React.SetStateAction<Img>>, img: Img }) => {
+interface FileInputProps {
+    handleImg: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    isBlocked: boolean;
+}
+
+interface EmojiPickerComponentProps {
+    openEmoji: boolean;
+    setOpenEmoji: React.Dispatch<React.SetStateAction<boolean>>;
+    handleEmoji: (emoji: any) => void;
+    isBlocked: boolean;
+}
+
+interface MessageTextareaProps {
+    text: string;
+    setText: React.Dispatch<React.SetStateAction<string>>;
+    handleSendText: () => void;
+    isBlocked: boolean;
+}
+
+interface SendButtonProps {
+    handleSendText: () => void;
+    isBlocked: boolean;
+}
+
+export const ComposeMessage = ({ setImg, img }: ComposeMessageProps) => {
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
     const { handleImg, handleEmoji, handleSendText, text, setText, openEmoji, setOpenEmoji } = useComposeMessage({ setImg, img });
     const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
@@ -15,8 +41,8 @@ export const ComposeMessage = ({ setImg, img }: { setImg: React.Dispatch<React.S
     return (
         <div className="bottom mt-auto flex justify-between items-center gap-5 p-5 border-t border-neutral-800">
             <div className="icons flex gap-5">
-                <FileInput handleImg={handleImg} />
-                <EmojiPickerComponent openEmoji={openEmoji} setOpenEmoji={setOpenEmoji} handleEmoji={handleEmoji} />
+                <FileInput handleImg={handleImg} isBlocked={isBlocked} />
+                <EmojiPickerComponent openEmoji={openEmoji} setOpenEmoji={setOpenEmoji} handleEmoji={handleEmoji} isBlocked={isBlocked} />
             </div>
             <MessageTextarea text={text} setText={setText} handleSendText={handleSendText} isBlocked={isBlocked} />
             <SendButton handleSendText={handleSendText} isBlocked={isBlocked} />
@@ -24,20 +50,18 @@ export const ComposeMessage = ({ setImg, img }: { setImg: React.Dispatch<React.S
     );
 };
 
-const FileInput = ({ handleImg }: { handleImg: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-    <>
-        <label htmlFor="file">
-            <IconPhoto />
-        </label>
+const FileInput = ({ handleImg, isBlocked }: FileInputProps) => (
+    <button onClick={() => document.getElementById('file')?.click()} disabled={isBlocked} className="disabled:cursor-not-allowed">
+        <PhotoIcon className="text-white size-5" />
         <input type="file" id="file" className="hidden" onChange={handleImg} />
-    </>
+    </button>
 );
 
-const EmojiPickerComponent = ({ openEmoji, setOpenEmoji, handleEmoji }: { openEmoji: boolean, setOpenEmoji: React.Dispatch<React.SetStateAction<boolean>>, handleEmoji: (emoji: any) => void }) => (
-    <div className="emoji relative">
-        <div onClick={() => setOpenEmoji(prev => !prev)}>
-            <IconEmoji />
-        </div>
+const EmojiPickerComponent = ({ openEmoji, setOpenEmoji, handleEmoji, isBlocked }: EmojiPickerComponentProps) => (
+    <div className="relative flex items-center">
+        <button onClick={() => setOpenEmoji(prev => !prev)} disabled={isBlocked} className="disabled:cursor-not-allowed">
+            <FaceSmileIcon className="text-white size-5" />
+        </button>
         {openEmoji && (
             <div className="absolute bottom-12 left-0">
                 <EmojiPicker onEmojiClick={handleEmoji} />
@@ -46,7 +70,7 @@ const EmojiPickerComponent = ({ openEmoji, setOpenEmoji, handleEmoji }: { openEm
     </div>
 );
 
-const MessageTextarea = ({ text, setText, handleSendText, isBlocked }: { text: string, setText: React.Dispatch<React.SetStateAction<string>>, handleSendText: () => void, isBlocked: boolean }) => (
+const MessageTextarea = ({ text, setText, handleSendText, isBlocked }: MessageTextareaProps) => (
     <textarea
         placeholder={isBlocked ? 'You cannot send a message' : 'Type a message...'}
         rows={1}
@@ -63,7 +87,7 @@ const MessageTextarea = ({ text, setText, handleSendText, isBlocked }: { text: s
     />
 );
 
-const SendButton = ({ handleSendText, isBlocked }: { handleSendText: () => void, isBlocked: boolean }) => (
+const SendButton = ({ handleSendText, isBlocked }: SendButtonProps) => (
     <button
         onClick={handleSendText}
         disabled={isBlocked}
