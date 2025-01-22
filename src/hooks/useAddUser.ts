@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, getDocs, query, where, getDoc } from "firebase/firestore";
+import { collection, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, getDocs, query, where, getDoc, onSnapshot } from "firebase/firestore";
 import { useState } from "react";
 import { db } from "../lib/firebase";
 import { useUserStore } from "../lib/userStore";
@@ -7,40 +7,47 @@ export const useAddUser = () => {
 
     const { currentUser } = useUserStore();
 
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<(User & { isAdded: boolean; })[]>([]);
+    const [filterInput, setFilterInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [addingUserId, setAddingUserId] = useState<string | null>(null);
+    const filteredUsers = users.filter((user) => user.username.toLowerCase().includes(filterInput.toLowerCase()));
 
-    const searchUser = async (username: string) => {
-        try {
-            const userRef = collection(db, "users");
-            const userQuery = query(
-                userRef,
-                where("username", ">=", username),
-                where("username", "<=", username + '\uf8ff'),
-                where("username", "!=", currentUser.username)
-            );
+    // const searchUser = async (username: string) => {
+    //     try {
+    //         const userRef = collection(db, "users");
+    //         const userQuery = query(
+    //             userRef,
+    //             where("username", ">=", username),
+    //             where("username", "<=", username + '\uf8ff'),
+    //             where("username", "!=", currentUser.username)
+    //         );
 
-            const querySnapshot = await getDocs(userQuery);
+    //         const querySnapshot = await getDocs(userQuery);
 
-            if (!querySnapshot.empty) {
-                const allUsers = await Promise.all(querySnapshot.docs.map(async (doc) => {
-                    const user = doc.data();
-                    const isAdded = await checkIfUserIsAlreadyAdded(user.id);
-                    return { ...user, isAdded };
-                }));
-                setUsers(allUsers);
-            } else {
-                setUsers([]);
-            }
-        } catch (err) {
-            console.log(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    //         if (!querySnapshot.empty) {
+    //             const allUsers = await Promise.all(querySnapshot.docs.map(async (doc) => {
+    //                 const user = doc.data();
+    //                 const isAdded = await checkIfUserIsAlreadyAdded(user.id);
+    //                 return { ...user, isAdded };
+    //             }));
+    //             setUsers(allUsers);
+    //         } else {
+    //             setUsers([]);
+    //         }
+    //     } catch (err) {
+    //         console.log(err);
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // };
+
+    // const searchUser = async (username: string) => {
+        
+    // }
 
     const fetchUsers = async () => {
+        console.log('fetchUsers')
         setIsLoading(true);
         try {
             const userRef = collection(db, "users");
@@ -50,7 +57,7 @@ export const useAddUser = () => {
 
             if (!querySnapshot.empty) {
                 const allUsers = await Promise.all(querySnapshot.docs.map(async (doc) => {
-                    const user = doc.data();
+                    const user = doc.data() as User;
                     const isAdded = await checkIfUserIsAlreadyAdded(user.id);
                     return { ...user, isAdded };
                 }));
@@ -114,5 +121,5 @@ export const useAddUser = () => {
         }
     };
 
-    return { users, isLoading, addingUserId, addUser, fetchUsers, searchUser };
+    return { isLoading, addingUserId, addUser, fetchUsers, setFilterInput, filteredUsers };
 }
