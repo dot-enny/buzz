@@ -38,7 +38,8 @@ export const Messages = ({ img }: { img: string }) => {
 
 const Message = React.memo(({ message }: { message: MessageProps }) => {
     const { currentUser } = useUserStore();
-    const { user } = useChatStore();
+    const { user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+    const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
     const isCurrentUser = message.senderId === currentUser.id;
     const messageClass = isCurrentUser ? "self-end" : "self-start";
@@ -48,7 +49,7 @@ const Message = React.memo(({ message }: { message: MessageProps }) => {
         <div className={`message ${messageClass}`}>
             {!isCurrentUser && (
                 <img
-                    src={user.avatar}
+                    src={!isBlocked ? user.avatar : './img/avatar-placeholder.png'} 
                     alt="user"
                     className="w-7 h-7 rounded-full object-cover"
                 />
