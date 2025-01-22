@@ -3,6 +3,7 @@ import { useUserStore } from "../../../lib/userStore";
 import { UserPlusIcon } from "@heroicons/react/24/outline";
 import AddUser from "./addUser/AddUser";
 import { useChatList } from "../../../hooks/useChatList";
+import { useChatStore } from "../../../lib/chatStore";
 
 
 export const ChatList = () => {
@@ -23,17 +24,13 @@ export const ChatList = () => {
                     <UserPlusIcon className="text-white size-6" />
                 </button>
             </div>
-
             {
                chats && 
                 filteredChats.map((chat) => (
                     <ListItem key={chat.chatId} chat={chat} onClick={() => handleSelectChat(chat)} />
                 ))
             }
-
-            <>
-                <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
-            </>
+            <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>
     )
 }
@@ -42,7 +39,8 @@ export const ChatList = () => {
 const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
     const sender = chat.user;
     const { currentUser } = useUserStore();
-    const userBlocked = sender.blocked.includes(currentUser.id);
+    const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+    const userBlocked = sender.blocked.includes(currentUser.id) || currentUser.blocked.includes(sender.id) || isCurrentUserBlocked || isReceiverBlocked;
     const lastMessagePreview = chat.lastMessage.slice(0, 30);
     
     return (
@@ -53,7 +51,7 @@ const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
         >
             <img src={ userBlocked ? './img/avatar-placeholder.png' : sender.avatar } alt="user" className="w-12 h-12 rounded-full object-cover" />
             <div>
-                <h2>{ userBlocked ? 'User' : sender.username }</h2>
+                <h2>{ sender.username }</h2>
                 <p className="text-neutral-500">{ lastMessagePreview }{ lastMessagePreview.length >= 30 ? '...' : '' }</p>
             </div>
         </div>

@@ -1,58 +1,19 @@
 import { IconChevronDown } from "../icons/IconChevronDown"
 import { IconChevronUp } from "../icons/IconChevronUp"
 import { IconDownload } from "../icons/IconDownload"
-import { auth, db } from "../../lib/firebase"
+import { auth } from "../../lib/firebase"
 import { useChatStore } from "../../lib/chatStore"
-import { arrayRemove, arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore"
-import { useUserStore } from "../../lib/userStore"
+import { useBlockUser } from "../../hooks/chat-details/useBlockUser"
 
 export const Detail = () => {
 
-  const { currentUser, fetchUserInfo } = useUserStore();
-  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, changeChat } = useChatStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, resetChat } = useChatStore();
+  const { handleBlock } = useBlockUser();
+  const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
   const signOut = async () => {
     await auth.signOut();
-  };
-
-  const handleBlock = async () => {
-    if (!chatId) return;
-
-    const userDocRef = doc(db, "users", currentUser.id);
-
-    const toggleBlock = async (blockValue: ('block' | 'unblock'), id: string) => {
-      try {
-        await updateDoc(userDocRef, {
-          blocked: blockValue === 'block' ? arrayUnion(id) : arrayRemove(id)
-        });
-        refetchUserInfo(id);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    const chatRef = doc(db, "chats", chatId);
-    const chatDocSnap = await getDoc(chatRef);
-    const chatData = chatDocSnap.data();
-
-    const refetchUserInfo = async (blockedUserId: string) => {
-      fetchUserInfo(currentUser.id);
-      const receiverDocRef = doc(db, "users", blockedUserId);
-      const receiverDocSnap = await getDoc(receiverDocRef);
-      const user = receiverDocSnap.data();
-      changeChat(chatId, user);
-    };
-
-    // UNBLOCK USER
-    if (!user) {
-      if (!chatData) return;
-      const blockedUser = chatData.messages.find((chat: any) => chat.senderId != currentUser.id);
-      toggleBlock('unblock', blockedUser.senderId);
-      return;
-    };
-
-    // BLOCK USER
-    toggleBlock('block', user.id);
+    resetChat()
   };
 
   return (
@@ -67,9 +28,9 @@ export const Detail = () => {
           </div>
         ) : (
           <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
-            <img src={user.avatar} alt="user" className="w-24 h-24 rounded-full object-cover" />
-            <h2>{user.username}</h2>
-            <p className="text-neutral-500">{user.status}</p>
+            <img src={ !isBlocked ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-24 h-24 rounded-full object-cover" />
+            <h2>{ user.username }</h2>
+            <p className="text-neutral-500">{ isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : user.status }</p>
           </div>
         )
       }
@@ -81,7 +42,7 @@ export const Detail = () => {
           <div className="flex">
             { chatId && 
               <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
-                {isCurrentUserBlocked ? 'You are Blocked!' : isReceiverBlocked ? 'User Blocked' : 'Block User'}
+                { isReceiverBlocked ? 'Unblock User' : 'Block User' }
               </button>
             }
             <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
