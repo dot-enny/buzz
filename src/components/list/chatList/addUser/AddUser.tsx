@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { ArrowPathIcon, CheckBadgeIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, CheckBadgeIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAddUser } from '../../../../hooks/useAddUser'
 import Tooltip from '../../../ui/Tooltip'
+import { useEffect } from 'react'
 
 export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (val: boolean) => void }) {
 
-  const { fetchUsers, addUser, addingUserId, users } = useAddUser()
+  const { fetchUsers, addUser, addingUserId, filteredUsers, setFilterInput } = useAddUser()
 
   useEffect(() => {
     if (isOpen) fetchUsers();
@@ -30,7 +30,8 @@ export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
             >
               <div className="flex h-full flex-col overflow-y-scroll bg-neutral-900 shadow-xl">
                 <DrawerHeader setIsOpen={setIsOpen} />
-                <UserList users={users} addUser={addUser} addingUserId={addingUserId} />
+                <SearchBar setFilterInput={setFilterInput} isLoading={false} />
+                <UserList users={filteredUsers} addUser={addUser} addingUserId={addingUserId} />
               </div>
             </DialogPanel>
           </div>
@@ -43,7 +44,7 @@ export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
 const DrawerHeader = ({ setIsOpen }: { setIsOpen: (val: boolean) => void }) => (
   <div className="p-6">
     <div className="flex items-start justify-between">
-      <DialogTitle className="text-base font-semibold">Add or block users on buzz</DialogTitle>
+      <DialogTitle className="text-base font-semibold">Add other users on buzz as friends</DialogTitle>
       <div className="ml-3 flex h-7 items-center">
         <Tooltip tip="Close panel" className="-left-10">
           <button
@@ -113,3 +114,14 @@ const TeamListItemDetails = ({ user }: { user: User }) => (
   </div>
 )
 
+const SearchBar = ({ setFilterInput }: { setFilterInput: (val: string) => void, isLoading: boolean }) => {
+  return (
+    <div className="bg-neutral-900 flex items-center gap-5 px-6 py-2 rounded-lg">
+      <MagnifyingGlassIcon className="text-white size-5" />
+      <input type="text" placeholder="Search"
+        onChange={(e) => setFilterInput(e.target.value)}
+        className="bg-transparent border-none outline-none text-white"
+      />
+    </div>
+  )
+}
