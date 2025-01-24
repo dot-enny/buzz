@@ -14,6 +14,7 @@ Work in progress
 - Firebase.
 - React Toastify.
 - Zustand.
+- Tailwind.
 
 ## Author
 
