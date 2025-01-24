@@ -1,85 +1,36 @@
-import { useEffect, useState } from "react";
-import { IconPlus } from "../../icons/IconPlus"
 import { IconSearch } from "../../icons/IconSearch"
-import { IconMinus } from "../../icons/IconMinus";
-import { AddUser } from "./addUser/AddUser";
-import { db } from "../../../lib/firebase";
-import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useUserStore } from "../../../lib/userStore";
+import { UserPlusIcon } from "@heroicons/react/24/outline";
+import AddUser from "./addUser/AddUser";
+import { useChatList } from "../../../hooks/useChatList";
 import { useChatStore } from "../../../lib/chatStore";
 
 
 export const ChatList = () => {
 
-    const [addMode, setAddMode] = useState(false);
-    const [chats, setChats] = useState<any[]>([]);
-
-    const { currentUser } = useUserStore();
-    const { changeChat } = useChatStore();
-
-    useEffect(() => {
-        const unsub = onSnapshot(doc(db, "userchats", currentUser.id), async (res) => {
-            const data = res.data();
-            const items = data ? data.chats : [];
-            const promises = items.map(async (item: any) => {
-                const userDocRef = doc(db, "users", item.receiverId);
-                const userDocSnap = await getDoc(userDocRef);
-
-                const user = userDocSnap.data();
-
-                return { ...item, user };
-            })
-
-            const chatData = await Promise.all(promises);
-            setChats(chatData.sort((a, b) => b.updatedAt - a.updatedAt));
-        });
-        return () => unsub();
-    }, [currentUser.id]);
-
-    const handleSelectChat = async (chat: any) => {
-        const userChats = chats.map((item) => {
-            const { user, ...rest } = item;
-            return rest;
-        });
-
-        const chatIndex = userChats.findIndex((item) => item.chatId === chat.chatId);
-
-        userChats[chatIndex].isSeen = true;
-
-        const userChatsRef = doc(db, "userchats", currentUser.id);
-
-        try {
-            await updateDoc(userChatsRef, {
-                chats: userChats,
-            });
-            changeChat(chat.chatId, chat.user);
-        } catch (err) {
-            console.log(err);
-        };
-    };
+    const { isOpen, setIsOpen, chats, setInput, filteredChats, handleSelectChat } = useChatList();
 
     return (
-        <div className="flex-1 overflow-y-scroll">
+        <div className="flex-1 overflow-y-auto">
             <div className="flex items-center gap-5 p-5">
                 <div className="flex-1 bg-neutral-900 flex items-center gap-5 p-2 rounded-lg">
                     <IconSearch />
-                    <input type="text" placeholder="Search" className="bg-transparent border-none outline-none text-white" />
+                    <input type="text" placeholder="Search" 
+                        onChange={(e) => setInput(e.target.value)}
+                        className="bg-transparent border-none outline-none text-white" 
+                    />
                 </div>
-                <div onClick={() => setAddMode((prev) => !prev)} className="cursor-pointer">
-                    {addMode ? <IconMinus /> : <IconPlus />}
-                </div>
+                <button onClick={() => setIsOpen((prev) => !prev)} className="cursor-pointer">
+                    <UserPlusIcon className="text-white size-6" />
+                </button>
             </div>
-
             {
                chats && 
-                chats.map((chat) => (
+                filteredChats.map((chat) => (
                     <ListItem key={chat.chatId} chat={chat} onClick={() => handleSelectChat(chat)} />
                 ))
             }
-
-            <>
-                { addMode && <AddUser /> }
-            </>
+            <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>
     )
 }
@@ -87,6 +38,10 @@ export const ChatList = () => {
 
 const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
     const sender = chat.user;
+    const { currentUser } = useUserStore();
+    const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+    const userBlocked = sender.blocked.includes(currentUser.id) || currentUser.blocked.includes(sender.id) || isCurrentUserBlocked || isReceiverBlocked;
+    const lastMessagePreview = chat.lastMessage.slice(0, 30);
     
     return (
         <div onClick={onClick} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
@@ -94,10 +49,10 @@ const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
                 backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'    
             }}
         >
-            <img src={ sender.avatar || './img/avatar-placeholder.png'} alt="user" className="w-12 h-12 rounded-full object-cover" />
+            <img src={ userBlocked ? './img/avatar-placeholder.png' : sender.avatar } alt="user" className="w-12 h-12 rounded-full object-cover" />
             <div>
                 <h2>{ sender.username }</h2>
-                <p className="text-neutral-500">{ chat.lastMessage }</p>
+                <p className="text-neutral-500">{ lastMessagePreview }{ lastMessagePreview.length >= 30 ? '...' : '' }</p>
             </div>
         </div>
     )

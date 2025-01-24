@@ -2,32 +2,58 @@ import { IconChevronDown } from "../icons/IconChevronDown"
 import { IconChevronUp } from "../icons/IconChevronUp"
 import { IconDownload } from "../icons/IconDownload"
 import { auth } from "../../lib/firebase"
+import { useChatStore } from "../../lib/chatStore"
+import { useBlockUser } from "../../hooks/chat-details/useBlockUser"
 
 export const Detail = () => {
 
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, resetChat } = useChatStore();
+  const { handleBlock } = useBlockUser();
+  const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
+
   const signOut = async () => {
     await auth.signOut();
+    resetChat()
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen">
+    <div className="flex-1 flex flex-col h-screen relative">
       {/* CONTACT PROFILE */}
-      <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
-        <img src="./img/avatar-placeholder.png" alt="user" className="w-24 h-24 rounded-full object-cover" />
-        <h2>Jane Doe</h2>
-        <p className="text-neutral-500">Lorem ipsum dolor, sit amet.</p>
-      </div>
+      {
+        !chatId ? (
+          <div className="flex-1 flex flex-col h-screen">
+            <h3 className="text-3xl m-auto text-neutral-800 font-semibold text-center max-w-[80%] leading-[1.3]">
+              Select a chat to see chat details
+            </h3>
+          </div>
+        ) : (
+          <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
+            <img src={ !isBlocked ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-24 h-24 rounded-full object-cover" />
+            <h2>{ user.username }</h2>
+            <p className="text-neutral-500">{ isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : user.status }</p>
+          </div>
+        )
+      }
+
       {/* CHAT MENU */}
-      <div className="info p-5 flex-1 flex flex-col gap-7 overflow-auto">
-        <Options />
-        <div className="flex">
-          <button className="mt-1 text-red-500 w-fit mx-auto">Block User</button>
-          <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
+      <div className="info p-5 flex-1 flex flex-col gap-7 overflow-y-auto">
+        { chatId && <Options /> }
+        <div className="absolute bottom-0 inset-x-0 frosted-glass py-5">
+          <div className="flex">
+            { chatId && 
+              <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
+                { isReceiverBlocked ? 'Unblock User' : 'Block User' }
+              </button>
+            }
+            <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
+          </div>
         </div>
       </div>
     </div>
+
   )
 }
+
 
 const Options = () => {
   return (

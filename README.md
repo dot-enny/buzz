@@ -15,6 +15,7 @@ Work in progress
 - React Toastify.
 - Zustand.
 - Tailwind.
+- timeago.js
 
 ## Author
 
