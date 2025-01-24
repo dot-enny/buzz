@@ -19,7 +19,7 @@ Work in progress
 ## Author
 
 - Github - [dot-enny](https://github.com/dot-enny)
-- Twitter - [@dot_enny](https://twitter.com/dot_enny)
+- Twitter - [@dot_enny](https://twitter.com/pixelade_)
 - Linkedin - [Olaniyan Eniola](https://www.linkedin.com/in/eniola-olaniyan-63a578263)
 
 ## Run Locally
