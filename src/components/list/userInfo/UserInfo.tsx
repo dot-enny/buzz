@@ -11,17 +11,19 @@ export const UserInfo = () => {
 
   return (
     <div className="p-5 flex items-center justify-between">
-        <div className="flex items-center gap-5">
-            <img src={ currentUser.avatar } alt="user" className="w-12 h-12 rounded-full object-cover" />
-            <span className="">
-              <h2>{ currentUser.username }</h2>
-              <span className="text-xs text-gray-400">{ currentUser.status }</span>
-            </span>
-        </div>
-        <Tooltip tip="edit profile" className="mt-2 -ml-7">
-          <PencilSquareIcon className="text-white size-5 cursor-pointer" onClick={() => (setIsOpen((prev) => !prev))} /> 
-        </Tooltip>
-        <EditInfo isOpen={isOpen} setIsOpen={setIsOpen} />
+      <div className="flex items-center gap-5">
+        <img src={currentUser.avatar} alt="user" className="w-12 h-12 rounded-full object-cover" />
+        <span className="">
+          <h2>{currentUser.username}</h2>
+          <span className="text-xs text-gray-400">{currentUser.status}</span>
+          {/* <span className="text-xs text-gray-400 md:inline-block lg:hidden">{currentUser.status.slice(0, 10)}</span> */}
+        </span>
+      </div>
+      <Tooltip tip="edit profile" className="mt-2 -ml-7 w-full">
+        <PencilSquareIcon className="text-white size-5 cursor-pointer" onClick={() => (setIsOpen((prev) => !prev))} />
+      </Tooltip>
+
+      <EditInfo isOpen={isOpen} setIsOpen={setIsOpen} />
     </div>
   )
 }
