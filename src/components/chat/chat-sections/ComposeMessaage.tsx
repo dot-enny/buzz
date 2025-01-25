@@ -39,7 +39,7 @@ export const ComposeMessage = ({ setImg, img }: ComposeMessageProps) => {
     const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
     return (
-        <div className="bottom mt-auto flex justify-between items-center gap-5 p-5 border-t border-neutral-800">
+        <div className="bottom-0 mt-auto flex justify-between items-center gap-5 p-5 border-t border-neutral-800">
             <div className="icons flex gap-5">
                 <FileInput handleImg={handleImg} isBlocked={isBlocked} />
                 <EmojiPickerComponent openEmoji={openEmoji} setOpenEmoji={setOpenEmoji} handleEmoji={handleEmoji} isBlocked={isBlocked} />
