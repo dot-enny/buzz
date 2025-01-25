@@ -17,7 +17,7 @@ export const Detail = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen relative">
+    <div className="flex-1 flex flex-col h-screen xl:relative">
       {/* CONTACT PROFILE */}
       {
         !chatId ? (

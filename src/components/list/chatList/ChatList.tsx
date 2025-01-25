@@ -4,11 +4,19 @@ import { UserPlusIcon } from "@heroicons/react/24/outline";
 import AddUser from "./addUser/AddUser";
 import { useChatList } from "../../../hooks/useChatList";
 import { useChatStore } from "../../../lib/chatStore";
+import { useAppStateStore } from "../../../lib/appStateStore";
 
 
 export const ChatList = () => {
 
     const { isOpen, setIsOpen, chats, setInput, filteredChats, handleSelectChat } = useChatList();
+    const { setIsChatOpen } = useAppStateStore();
+
+    const handleChatClick = (chat: any) => {
+        handleSelectChat(chat)
+        setIsChatOpen(true)
+        console.log(chat)
+    }
 
     return (
         <div className="flex-1 overflow-y-auto">
@@ -17,7 +25,7 @@ export const ChatList = () => {
                     <IconSearch />
                     <input type="text" placeholder="Search" 
                         onChange={(e) => setInput(e.target.value)}
-                        className="bg-transparent border-none outline-none text-white" 
+                        className="bg-transparent border-none outline-none text-white w-full" 
                     />
                 </div>
                 <button onClick={() => setIsOpen((prev) => !prev)} className="cursor-pointer">
@@ -27,7 +35,7 @@ export const ChatList = () => {
             {
                chats && 
                 filteredChats.map((chat) => (
-                    <ListItem key={chat.chatId} chat={chat} onClick={() => handleSelectChat(chat)} />
+                    <ListItem key={chat.chatId} chat={chat} onClick={handleChatClick} />
                 ))
             }
             <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
@@ -36,7 +44,7 @@ export const ChatList = () => {
 }
 
 
-const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
+const ListItem = ({ chat, onClick }: { chat: any, onClick: (chat: any) => void }) => {
     const sender = chat.user;
     const { currentUser } = useUserStore();
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
@@ -44,7 +52,7 @@ const ListItem = ({ chat, onClick }: { chat: any, onClick: () => void }) => {
     const lastMessagePreview = chat.lastMessage.slice(0, 30);
     
     return (
-        <div onClick={onClick} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
+        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
             style={{
                 backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'    
             }}
