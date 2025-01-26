@@ -42,9 +42,7 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
             await updateUserChats();
         } catch (err) {
             console.error("Error sending message:", err);
-        } finally {
-            resetInput();
-        }
+        } 
     };
 
     const handleImageUpload = async (): Promise<string | null> => {
@@ -55,11 +53,13 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
     };
 
     const sendMessage = async (imgUrl: string | null) => {
+        const textMessage = text.trim();
+        resetInput();
         if (chatId) {
             await updateDoc(doc(db, "chats", chatId), {
                 messages: arrayUnion({
                     senderId: currentUser.id,
-                    text,
+                    text: textMessage,
                     createdAt: new Date(),
                     ...(imgUrl && { img: imgUrl })
                 })
@@ -110,11 +110,11 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
     };
 
     const resetInput = () => {
+        setText("");
         setImg({
             file: null,
             url: "",
         });
-        setText("");
     };
 
     return { handleImg, handleSendText, text, setText, openEmoji, setOpenEmoji, handleEmoji };
