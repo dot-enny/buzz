@@ -3,6 +3,7 @@ import { format } from "timeago.js";
 import { useUserStore } from "../../../lib/userStore";
 import { useUpdateMessages } from "../../../hooks/chat/useUpdateMessages";
 import React from "react";
+import { Spinner } from "../../ui/Spinner";
 
 interface MessageProps {
     id: string;
@@ -19,10 +20,13 @@ export const Messages = ({ img }: { img: string }) => {
 
     return (
         <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
-            {messages &&
+            {messages ?
                 messages.map((message: MessageProps) => (
                     <Message key={message.createdAt.toDate().toISOString()} message={message} />
-                ))
+                )) : 
+                <div className="absolute inset-0 m-auto w-fit h-fit">
+                    <Spinner />
+                </div>
             }
             {img && (
                 <div className="message max-w-[70%] gap-5 self-end">
@@ -35,6 +39,7 @@ export const Messages = ({ img }: { img: string }) => {
         </div>
     );
 };
+
 
 const Message = React.memo(({ message }: { message: MessageProps }) => {
     const { currentUser } = useUserStore();
