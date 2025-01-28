@@ -39,8 +39,8 @@ export const ComposeMessage = ({ setImg, img }: ComposeMessageProps) => {
     const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
     return (
-        <div className="bottom-0 mt-auto flex justify-between items-center gap-5 p-5 border-t border-neutral-800">
-            <div className="icons flex gap-5">
+        <div className="mt-auto flex justify-between items-center sm:gap-5 p-5 border-t border-neutral-800">
+            <div className="icons flex gap-2 sm:gap-5">
                 <FileInput handleImg={handleImg} isBlocked={isBlocked} />
                 <EmojiPickerComponent openEmoji={openEmoji} setOpenEmoji={setOpenEmoji} handleEmoji={handleEmoji} isBlocked={isBlocked} />
             </div>
@@ -52,7 +52,7 @@ export const ComposeMessage = ({ setImg, img }: ComposeMessageProps) => {
 
 const FileInput = ({ handleImg, isBlocked }: FileInputProps) => (
     <button onClick={() => document.getElementById('file')?.click()} disabled={isBlocked} className="disabled:cursor-not-allowed">
-        <PhotoIcon className="text-white size-5" />
+        <PhotoIcon className="text-white size-4 sm:size-5" />
         <input type="file" id="file" className="hidden" onChange={handleImg} />
     </button>
 );
@@ -60,7 +60,7 @@ const FileInput = ({ handleImg, isBlocked }: FileInputProps) => (
 const EmojiPickerComponent = ({ openEmoji, setOpenEmoji, handleEmoji, isBlocked }: EmojiPickerComponentProps) => (
     <div className="relative flex items-center">
         <button onClick={() => setOpenEmoji(prev => !prev)} disabled={isBlocked} className="disabled:cursor-not-allowed">
-            <FaceSmileIcon className="text-white size-5" />
+            <FaceSmileIcon className="text-white size-4 sm:size-5" />
         </button>
         {openEmoji && (
             <div className="absolute bottom-12 left-0">
@@ -74,7 +74,7 @@ const MessageTextarea = ({ text, setText, handleSendText, isBlocked }: MessageTe
     <textarea
         placeholder={isBlocked ? 'You cannot send a message' : 'Type a message...'}
         rows={1}
-        className="flex-1 bg-neutral-900 border-none outline-none text-white p-5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+        className="flex-1 bg-neutral-900 border-none outline-none text-white p-2 sm:p-5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed resize-none max-sm:text-sm max-sm:max-w-[70%]"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
@@ -91,8 +91,8 @@ const SendButton = ({ handleSendText, isBlocked }: SendButtonProps) => (
     <button
         onClick={handleSendText}
         disabled={isBlocked}
-        className="text-white p-2 border-none rounded disabled:opacity-50 disabled:cursor-not-allowed"
+        className="text-white sm:p-2 border-none rounded disabled:opacity-50 disabled:cursor-not-allowed"
     >
-        <PaperAirplaneIcon className="text-white size-5" />
+        <PaperAirplaneIcon className="text-white size-4 sm:size-5" />
     </button>
 );

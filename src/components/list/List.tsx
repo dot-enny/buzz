@@ -8,7 +8,7 @@ export const List = () => {
   const { signOut } = useSignOut();
 
   return (
-    <div className="flex-1 flex flex-col h-screen">
+    <div className="min-h-[100dvh] max-h-[100dvh]">
       <UserInfo />
       <ChatList />
       <button onClick={signOut} className="xl:hidden mt-1 w-fit mx-auto fixed bottom-5 left-5 rounded-full border border-red-300 p-3">
