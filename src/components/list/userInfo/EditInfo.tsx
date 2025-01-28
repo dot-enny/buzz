@@ -13,6 +13,7 @@ interface EditInfoProps {
 }
 
 export default function EditInfo({ isOpen, setIsOpen }: EditInfoProps) {
+
     const { currentUser, fetchUserInfo } = useUserStore();
     const { avatar, selectAvatar } = useSelectAvatar();
     const { updateProfile, updatingProfile } = useUpdateProfile();
@@ -55,11 +56,11 @@ export default function EditInfo({ isOpen, setIsOpen }: EditInfoProps) {
                             </button>
                         </div>
 
-                        <div className="sm:flex sm:items-center">
+                        <div className="flex sm:items-center">
                             <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:size-10">
                                 <UserCircleIcon aria-hidden="true" className="size-6 text-blue-600" />
                             </div>
-                            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <div className="mt-3 sm:ml-4 sm:mt-0 max-sm:ml-4 max-sm:w-full">
                                 <DialogTitle as="h3" className="text-base font-semibold">
                                     Edit Profile
                                 </DialogTitle>
