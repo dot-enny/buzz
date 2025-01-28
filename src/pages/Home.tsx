@@ -9,7 +9,7 @@ export default function Home() {
   const { isChatOpen } = useAppStateStore();
 
   return (
-    <main className="flex min-h-screen">
+    <main className="flex min-h-[100dvh] max-h-[100dvh]">
       <div className={`flex-1 ${isChatOpen && 'max-md:hidden'}`}>
         <List />
       </div>

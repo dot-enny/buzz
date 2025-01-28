@@ -17,8 +17,8 @@ export const Chat = () => {
   })
 
   return (
-    <div className="h-screen flex flex-col flex-[2] border-l border-r border-neutral-800">
-      {chatId ? (
+    <div className="min-h-[100dvh] max-h-[100dvh] flex flex-col flex-[2] border-l border-r border-neutral-800 relative border">
+      {chatId  ? (
         <>
           <TopBar />
           <Messages img={img.url} />
