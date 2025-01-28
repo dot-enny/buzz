@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useSignup } from "../hooks/useSignup";
+import { Spinner } from "../components/ui/Spinner";
 
 export const SignUp = () => {
 
@@ -17,7 +18,10 @@ export const SignUp = () => {
 				<input type="text" placeholder="Username" name="username" required />
 				<input type="email" placeholder="Email" name="email" required />
 				<input type="password" placeholder="Password" name="password" required />
-				<button disabled={isLoading}>{isLoading ? 'Loading...' :'Sign Up'}</button>
+				<button disabled={isLoading}>
+					<span className={`${isLoading && 'invisible'}`}>Sign Up</span>
+					<Spinner className={`${!isLoading && 'invisible'} m-auto absolute inset-0`} />
+				</button>
 				<div className="auth-form__secondary-cta">
 					<span>Already have an account yet ?</span>
 					<Link to="/auth/sign-in">Login</Link>
