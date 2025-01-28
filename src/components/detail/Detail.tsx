@@ -1,20 +1,17 @@
 import { IconChevronDown } from "../icons/IconChevronDown"
 import { IconChevronUp } from "../icons/IconChevronUp"
 import { IconDownload } from "../icons/IconDownload"
-import { auth } from "../../lib/firebase"
 import { useChatStore } from "../../lib/chatStore"
 import { useBlockUser } from "../../hooks/chat-details/useBlockUser"
+import { useSignOut } from "../../hooks/useSignOut"
 
 export const Detail = () => {
 
-  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, resetChat } = useChatStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
   const { handleBlock } = useBlockUser();
   const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
-  const signOut = async () => {
-    await auth.signOut();
-    resetChat()
-  };
+  const { signOut } = useSignOut();
 
   return (
     <div className="flex-1 flex flex-col h-screen xl:relative">
