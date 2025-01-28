@@ -22,7 +22,7 @@ export const TopBar = () => {
           <InformationCircleIcon className="text-white size-6 xl:hidden" />
         </button>
         <button>
-          <ChevronDoubleLeftIcon className="text-white size-6" onClick={() => setIsChatOpen(false)} />
+          <ChevronDoubleLeftIcon className="text-white size-6 md:hidden" onClick={() => setIsChatOpen(false)} />
         </button>
       </div>
     </div>
