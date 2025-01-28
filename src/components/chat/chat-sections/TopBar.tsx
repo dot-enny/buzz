@@ -9,7 +9,7 @@ export const TopBar = () => {
   const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
   return (
-    <div className="top p-5 flex justify-between items-center border-b border-neutral-800">
+    <div className="top p-3 sm:p-5 flex justify-between items-center border-b border-neutral-800">
       <div className="user flex items-center gap-5">
         <img src={!isBlocked ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-14 h-14 rounded-full object-cover" />
         <div className="texts flex flex-col gap-1">
