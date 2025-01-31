@@ -12,7 +12,7 @@ export const useUpdateMessages = () => {
     const endRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        endRef.current?.scrollIntoView({ behavior: 'smooth' })
+        endRef.current?.scrollIntoView()
     }, [messages])
 
     useEffect(() => {
