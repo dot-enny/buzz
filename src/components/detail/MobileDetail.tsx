@@ -9,7 +9,7 @@ export default function MobileDetail() {
   const { isChatDetailOpen, setIsChatDetailOpen } = useAppStateStore()
 
   return (
-    <Dialog open={isChatDetailOpen} onClose={setIsChatDetailOpen} className="relative z-10 xl:hidden min-h-[100dvh] max-h[100dvh]">
+    <Dialog open={isChatDetailOpen} onClose={setIsChatDetailOpen} className="relative z-10 xl:hidden h-[100svh]">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-[closed]:opacity-0"

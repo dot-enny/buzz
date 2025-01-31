@@ -63,7 +63,7 @@ const Message = React.memo(({ message }: { message: MessageProps }) => {
                 {message.img && (
                     <img src={message.img} alt="user" className="rounded-lg object-cover h-[400px]" />
                 )}
-                <p className={`text-white ${textClass} p-3 sm:p-5 rounded-lg break-all`}>{message.text}</p>
+                <p className={`text-white ${textClass} p-4 rounded-lg break-before-auto`}>{message.text}</p>
                 <span className="text-neutral-500 text-xs">{format(message.createdAt.toDate())}</span>
             </div>
         </div>
