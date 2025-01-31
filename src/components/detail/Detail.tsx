@@ -14,7 +14,7 @@ export const Detail = () => {
   const { signOut } = useSignOut();
 
   return (
-    <div className="flex-1 flex flex-col h-screen xl:relative">
+    <div className="flex-1 flex flex-col h-[100svh] xl:relative">
       {/* CONTACT PROFILE */}
       {
         !chatId ? (
