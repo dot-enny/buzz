@@ -7,10 +7,10 @@ export const TopBar = () => {
   const { setIsChatOpen, isChatDetailOpen, setIsChatDetailOpen } = useAppStateStore()
   const { user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
   const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
-  const isStatusLong = user.status.length > 35;
-  const isStatusLongMobile = user.status.length > 30;
-  const status = isStatusLong ? user.status.slice(0, 30) : user.status.slice(0, 35);
-  const statusMobile = isStatusLongMobile ? user.status.slice(0, 27) : user.status.slice(0, 29);
+  // const isStatusLong = user.status.length > 35;
+  // const isStatusLongMobile = user.status.length > 30;
+  // const status = isStatusLong ? user.status.slice(0, 30) : user.status.slice(0, 35);
+  // const statusMobile = isStatusLongMobile ? user.status.slice(0, 27) : user.status.slice(0, 29);
 
   return (
     <div className="top p-3 sm:p-5 flex justify-between items-center border-b border-neutral-800">
@@ -18,8 +18,9 @@ export const TopBar = () => {
         <img src={!isBlocked ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-14 h-14 rounded-full object-cover" />
         <div className="texts flex flex-col gap-1">
           <span className="text-lg font-bold">{user.username}</span>
-          <p className="max-md:hidden text-sm font-light text-neutral-500">{isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : status}{isStatusLong && '...'}</p>
-          <p className="md:hidden text-sm font-light text-neutral-500">{isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : statusMobile}{isStatusLongMobile && '...'}</p>
+          {/* <p className="max-md:hidden text-sm font-light text-neutral-500">{isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : status}{isStatusLong && '...'}</p>
+          <p className="md:hidden text-sm font-light text-neutral-500">{isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : statusMobile}{isStatusLongMobile && '...'}</p> */}
+          <p className="text-sm font-light text-neutral-500 line-clamp-1">{isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : user.status}</p>
         </div>
       </div>
       <div className="actions flex gap-5">
