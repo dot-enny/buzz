@@ -1,5 +1,5 @@
 # Buzz
-
+ 
 ## Description
 Live Chat Application built with react and firebase.   
 Add friends and start chatting with them instantly on Buzz.
