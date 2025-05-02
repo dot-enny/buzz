@@ -9,13 +9,12 @@ import { useAppStateStore } from "../../../lib/appStateStore";
 
 export const ChatList = () => {
 
-    const { isOpen, setIsOpen, chats, setInput, filteredChats, handleSelectChat } = useChatList();
+    const { isOpen, setIsOpen, setInput, filteredChats, handleSelectChat } = useChatList();
     const { setIsChatOpen } = useAppStateStore();
 
     const handleChatClick = (chat: any) => {
         handleSelectChat(chat)
         setIsChatOpen(true)
-        console.log(chat)
     }
 
     return (
@@ -33,10 +32,10 @@ export const ChatList = () => {
                 </button>
             </div>
             {
-               chats && 
+                filteredChats ?
                 filteredChats.map((chat) => (
-                    <ListItem key={chat.chatId} chat={chat} onClick={handleChatClick} />
-                ))
+                    <ListItem key={chat.chatId} chat={chat} onClick={handleChatClick} isLoading={filteredChats.length === 0} />
+                )) : <div className="text-white text-6xl">Loading...</div>
             }
             <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>
@@ -44,23 +43,38 @@ export const ChatList = () => {
 }
 
 
-const ListItem = ({ chat, onClick }: { chat: any, onClick: (chat: any) => void }) => {
+const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any) => void, isLoading: boolean }) => {
     const sender = chat.user;
     const { currentUser } = useUserStore();
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
     const userBlocked = sender.blocked.includes(currentUser.id) || currentUser.blocked.includes(sender.id) || isCurrentUserBlocked || isReceiverBlocked;
-    const lastMessagePreview = chat.lastMessage.slice(0, 30);
-    
+    const lastMessagePreview = chat.lastMessage;
+
     return (
         <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
             style={{
-                backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'    
+                backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
             }}
         >
-            <img src={ userBlocked ? './img/avatar-placeholder.png' : sender.avatar } alt="user" className="w-12 h-12 rounded-full object-cover" />
+            {!isLoading ?
+                <img
+                    src={userBlocked ? './img/avatar-placeholder.png' : sender.avatar}
+                    alt="user"
+                    className="w-12 h-12 rounded-full object-cover" /> :
+                <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+            }
             <div>
-                <h2>{ sender.username }</h2>
-                <p className="text-neutral-500">{ lastMessagePreview }{ lastMessagePreview.length >= 30 ? '...' : '' }</p>
+                {!isLoading ?
+                    (<>
+                        <h2>{sender.username}</h2>
+                        <p className="text-neutral-500 line-clamp-1">{lastMessagePreview}</p>
+                    </>) : (
+                        <div className="opacity-50">
+                            <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
+                            <div className="w-[200px] h-5 bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
+                        </div>
+                    )
+                }
             </div>
         </div>
     )
