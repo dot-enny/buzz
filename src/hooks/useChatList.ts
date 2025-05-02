@@ -62,7 +62,6 @@ export const useChatList = () => {
     return {
         isOpen,
         setIsOpen,
-        chats,
         setInput,
         filteredChats,
         handleSelectChat,
