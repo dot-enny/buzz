@@ -10,11 +10,14 @@
     scrollbar-width: thin;
     scrollbar-color: #171717 transparent;
 }
+
 body {
     background: #0a0a0a;
     color: white;
-    width: 100dvw;
-    height: 100dvh;
+    /* width: 100dvw;
+    height: 100dvh; */
+    /* border: 1px solid red;
+    width: minmax() */
 }
 
 .auth-form {
