@@ -65,7 +65,7 @@ const Message = React.memo(({ message, index, animate }: { message: MessageProps
             className={`message ${messageClass}`}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={animate ? { duration: 0.3, type: "spring", bounce: 0.25, delay: ((index+1) % messagesToAnimate) * 0.1 } : { duration: 0.1 }}
+            transition={animate ? { duration: 0.5, type: "spring", bounce: 0.25, delay: ((index+1) % messagesToAnimate) * 0.1 } : { duration: 0.1 }}
         >
             {!isCurrentUser && (
                 <img
