@@ -20,22 +20,14 @@ export const ChatList = () => {
     return (
         <div className="flex-1 overflow-y-auto">
             <div className="flex items-center gap-5 p-5">
-                <div className="flex-1 bg-neutral-900 flex items-center gap-5 p-2 rounded-lg">
-                    <IconSearch />
-                    <input type="text" placeholder="Search" 
-                        onChange={(e) => setInput(e.target.value)}
-                        className="bg-transparent border-none outline-none text-white w-full" 
-                    />
-                </div>
-                <button onClick={() => setIsOpen((prev) => !prev)} className="cursor-pointer">
-                    <UserPlusIcon className="text-white size-6" />
-                </button>
+                <SearchBar setInput={setInput} />
+                <AddUserButton setIsOpen={setIsOpen} />
             </div>
             {
                 filteredChats ?
-                filteredChats.map((chat) => (
-                    <ListItem key={chat.chatId} chat={chat} onClick={handleChatClick} isLoading={filteredChats.length === 0} />
-                )) : <div className="text-white text-6xl">Loading...</div>
+                    filteredChats.map((chat) => (
+                        <ListItem key={chat.chatId} chat={chat} onClick={handleChatClick} isLoading={filteredChats.length === 0} />
+                    )) : <div className="text-white text-6xl">Loading...</div>
             }
             <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>
@@ -79,3 +71,26 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
         </div>
     )
 }
+
+const SearchBar = ({ setInput }: { setInput: (input: string) => void }) => {
+    return (
+        <div className="flex-1 bg-neutral-900 flex items-center gap-2 px-3 py-2 rounded-lg">
+            {/* <span className="ml-2"> */}
+            <IconSearch />
+            {/* </span> */}
+            <input type="text" placeholder="Search"
+                onChange={(e) => setInput(e.target.value)}
+                className="bg-transparent border-none outline-none text-white w-full"
+            />
+        </div>
+    )
+}
+
+const AddUserButton = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
+    return (
+        <button onClick={() => setIsOpen(true)} className="cursor-pointer">
+            <UserPlusIcon className="text-white size-6" />
+        </button>
+    )
+}
+
