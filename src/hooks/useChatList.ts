@@ -15,10 +15,20 @@ export const useChatList = () => {
     const { changeChat, resetChat, chatId } = useChatStore();
 
     useEffect(() => {
+        /**
+         * Subscribes to real-time updates of the current user's chat list from Firestore.
+         * 
+         * Listens to changes on the "userchats" document for the current user and updates the local chat state accordingly.
+         * For each chat item, fetches the corresponding receiver's user data and merges it with the chat information.
+         * The chat list is then sorted by the `updatedAt` timestamp in descending order
+         * 
+         * @constant unsub - The unsubscribe function returned by Firestore's `onSnapshot` listener.
+         * Call this function to stop listening to updates when the component unmounts or when no longer needed.
+         */
         const unsub = onSnapshot(doc(db, "userchats", currentUser.id), async (res) => {
             const data = res.data();
             const items = data ? data.chats : [];
-            const promises = items.map(async (item: any) => {
+            const promises = items.map(async (item: UserChat) => {
                 const userDocRef = doc(db, "users", item.receiverId);
                 const userDocSnap = await getDoc(userDocRef);
 
@@ -33,7 +43,18 @@ export const useChatList = () => {
         return () => unsub();
     }, [currentUser.id]);
 
-    const handleSelectChat = async (chat: any) => {
+    /**
+     * Handles the selection of a chat by the user.
+     *
+     * If the selected chat is already active, the function returns early.
+     * Otherwise, it resets the current chat state, marks the selected chat as seen,
+     * updates the user's chat list in the Firestore database, and changes the active chat.
+     *
+     * @param chat - The chat object that the user has selected.
+     * @returns A promise that resolves when the chat selection and update operations are complete.
+     */
+
+    const handleSelectChat = async (chat: UserChatDocWithReceiverInfo) => {
         if (chatId === chat.chatId) return;
 
         resetChat();

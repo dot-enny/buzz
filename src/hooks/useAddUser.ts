@@ -115,7 +115,7 @@ export const useAddUser = () => {
         const userChatsDoc = await getDoc(userChatsRef);
         if (userChatsDoc.exists()) {
             const userChats = userChatsDoc.data().chats;
-            return userChats.some((chat: Chat) => chat.receiverId === userId);
+            return userChats.some((chat: UserChat) => chat.receiverId === userId);
         } else {
             return false;
         }

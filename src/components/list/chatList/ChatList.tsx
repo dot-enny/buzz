@@ -6,13 +6,13 @@ import { useChatList } from "../../../hooks/useChatList";
 import { useChatStore } from "../../../lib/chatStore";
 import { useAppStateStore } from "../../../lib/appStateStore";
 
-
 export const ChatList = () => {
 
     const { isOpen, setIsOpen, setInput, filteredChats, handleSelectChat } = useChatList();
+    // boolean value to open messaging area
     const { setIsChatOpen } = useAppStateStore();
 
-    const handleChatClick = (chat: any) => {
+    const handleChatClick = (chat: UserChatDocWithReceiverInfo) => {
         handleSelectChat(chat)
         setIsChatOpen(true)
     }
