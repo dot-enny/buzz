@@ -7,7 +7,7 @@ interface User {
     status: string
 }
 
-interface Chat {
+interface UserChat {
     chatId: string,
     lastMessage: string,
     receiverId: string,
@@ -18,3 +18,5 @@ interface Avatar {
     file: File | null,
     url: string
 }
+
+type UserChatDocWithReceiverInfo = UserChat & { user: User };
