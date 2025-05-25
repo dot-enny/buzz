@@ -1,4 +1,4 @@
-import { onSnapshot, doc, collection, orderBy, query } from "firebase/firestore";
+import { onSnapshot, collection, orderBy, query } from "firebase/firestore";
 import { useState, useRef, useEffect } from "react";
 import { useChatStore } from "../../lib/chatStore";
 import { db } from "../../lib/firebase";
