@@ -1,4 +1,4 @@
-import { updateDoc, doc, arrayUnion, getDoc } from "firebase/firestore";
+import { updateDoc, doc, getDoc, collection, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import { useChatStore } from "../../lib/chatStore";
 import { db } from "../../lib/firebase";
@@ -42,7 +42,7 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
             await updateUserChats();
         } catch (err) {
             console.error("Error sending message:", err);
-        } 
+        }
     };
 
     const handleImageUpload = async (): Promise<string | null> => {
@@ -55,15 +55,19 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
     const sendMessage = async (imgUrl: string | null) => {
         const textMessage = text.trim();
         resetInput();
+
         if (chatId) {
-            await updateDoc(doc(db, "chats", chatId), {
-                messages: arrayUnion({
-                    senderId: currentUser.id,
-                    text: textMessage,
-                    createdAt: new Date(),
-                    ...(imgUrl && { img: imgUrl })
-                })
-            });
+            const messagesCollectionRef = collection(db, "chats", chatId, "messages");
+
+            const baseMessage = {
+                senderId: currentUser.id,
+                text: textMessage,
+                createdAt: new Date(),
+                ...(imgUrl && { img: imgUrl })
+            };
+
+            const newMessageRef = doc(messagesCollectionRef);
+            await setDoc(newMessageRef, baseMessage);
         }
     };
 
@@ -73,20 +77,20 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
         userIDs.forEach(async (id) => {
             const userChatsRef = doc(db, "userchats", id);
             const userChatsSnapshot = await getDoc(userChatsRef);
-  
+
             if (userChatsSnapshot.exists()) {
-              const userChatsData = userChatsSnapshot.data();
-              const chatIndex = userChatsData.chats.findIndex((chat: any) => chat.chatId === chatId);
-  
-              userChatsData.chats[chatIndex].lastMessage = text;
-              userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
-              userChatsData.chats[chatIndex].updatedAt = Date.now();
-  
-              await updateDoc(userChatsRef, {
-                chats: userChatsData.chats,
-              });
+                const userChatsData = userChatsSnapshot.data();
+                const chatIndex = userChatsData.chats.findIndex((chat: UserChatDocWithReceiverInfo) => chat.chatId === chatId);
+
+                userChatsData.chats[chatIndex].lastMessage = text;
+                userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+                userChatsData.chats[chatIndex].updatedAt = Date.now();
+
+                await updateDoc(userChatsRef, {
+                    chats: userChatsData.chats,
+                });
             };
-          });
+        });
 
         // for (const id of userIDs) {
         //     const userChatsRef = doc(db, "userchats", id);
