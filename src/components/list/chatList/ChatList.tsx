@@ -52,7 +52,7 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
                 <img
                     src={userBlocked ? './img/avatar-placeholder.png' : sender.avatar}
                     alt="user"
-                    className="w-12 h-12 rounded-full object-cover" /> :
+                    className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
                 <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
             }
             <div>
