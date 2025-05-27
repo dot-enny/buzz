@@ -52,7 +52,6 @@ const Message = React.memo(({ message, index, animate }: { message: MessageProps
 
     const isCurrentUser = message.senderId === currentUser.id;
     const messageClass = isCurrentUser ? "self-end" : "self-start";
-    const textClass = isCurrentUser ? "blue-900" : "blue-950/30";
     const messagesToAnimate = 5; // Number of messages to animate
 
     return (
