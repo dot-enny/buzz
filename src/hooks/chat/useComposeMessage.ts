@@ -4,26 +4,29 @@ import { useChatStore } from "../../lib/chatStore";
 import { db } from "../../lib/firebase";
 import { upload } from "../../lib/upload";
 import { useUserStore } from "../../lib/userStore";
-import { Img } from "../../components/chat/Chat";
 
-interface UseComposeMessageProps {
-    setImg: React.Dispatch<React.SetStateAction<Img>>;
-    img: Img;
+export interface Img {
+  file: File | null,
+  url: string
 }
 
-export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
+export const useComposeMessage = () => {
     const { currentUser } = useUserStore();
     const { chatId, user } = useChatStore();
 
     const [openEmoji, setOpenEmoji] = useState(false);
     const [text, setText] = useState('');
+    const [img, setImg] = useState<Img>({
+        file: null,
+        url: "",
+    })
 
     const handleEmoji = (e: { emoji: string }) => {
         setText((prev) => prev + e.emoji);
         setOpenEmoji(false);
     };
 
-    const handleImg = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImgSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             setImg({
@@ -34,7 +37,7 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
     };
 
     const handleSendText = async () => {
-        if (text.trim() === "") return;
+        if ((text.trim() === "") && img.file === null) return;
 
         try {
             const imgUrl = await handleImageUpload();
@@ -121,5 +124,5 @@ export const useComposeMessage = ({ setImg, img }: UseComposeMessageProps) => {
         });
     };
 
-    return { handleImg, handleSendText, text, setText, openEmoji, setOpenEmoji, handleEmoji };
+    return { handleImgSelect, img, setImg, handleSendText, text, setText, openEmoji, setOpenEmoji, handleEmoji };
 };
