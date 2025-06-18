@@ -9,9 +9,12 @@ interface User {
 
 interface UserChat {
     chatId: string,
-    lastMessage: string,
-    receiverId: string,
-    isSeen: boolean
+    lastMessage: string | null,
+    receiverId?: string, // for private chats
+    isSeen?: boolean,
+    type: 'private' | 'group' | 'global',
+    groupName?: string, // for group chats
+    groupPhotoURL?: string, // for group chats
 }
 
 interface Avatar {

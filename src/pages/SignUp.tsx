@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useSignup } from "../hooks/useSignup";
 import { Spinner } from "../components/ui/Spinner";
+import PasswordInput from "../components/ui/PasswordInput";
 
 export const SignUp = () => {
 
@@ -17,7 +18,7 @@ export const SignUp = () => {
 				<input type="file" id="profile-picture" placeholder="Profile Picture" className="hidden" onChange={selectAvatar} />
 				<input type="text" placeholder="Username" name="username" required />
 				<input type="email" placeholder="Email" name="email" required />
-				<input type="password" placeholder="Password" name="password" required />
+				<PasswordInput />
 				<button disabled={isLoading}>
 					<span className={`${isLoading && 'invisible'}`}>Sign Up</span>
 					<Spinner className={`${!isLoading && 'invisible'} m-auto absolute inset-0`} />
