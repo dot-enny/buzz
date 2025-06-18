@@ -4,6 +4,7 @@ import { useChatStore } from "../../lib/chatStore";
 import { db } from "../../lib/firebase";
 import { upload } from "../../lib/upload";
 import { useUserStore } from "../../lib/userStore";
+import { GLOBAL_CHAT_ID } from "../useSignup";
 
 export interface Img {
   file: File | null,
@@ -66,7 +67,8 @@ export const useComposeMessage = () => {
                 senderId: currentUser.id,
                 text: textMessage,
                 createdAt: new Date(),
-                ...(imgUrl && { img: imgUrl })
+                ...(imgUrl && { img: imgUrl }),
+                ...(chatId === GLOBAL_CHAT_ID && { senderUsername: currentUser.username, senderAvatar: currentUser.avatar })
             };
 
             const newMessageRef = doc(messagesCollectionRef);
@@ -75,6 +77,9 @@ export const useComposeMessage = () => {
     };
 
     const updateUserChats = async () => {
+        if(!user) return;
+        if(user.id === undefined) return;
+        
         const userIDs = [currentUser.id, user.id];
 
         userIDs.forEach(async (id) => {

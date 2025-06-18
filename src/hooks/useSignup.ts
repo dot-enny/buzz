@@ -6,6 +6,8 @@ import { auth, db } from "../lib/firebase";
 import { upload } from "../lib/upload";
 import { useSelectAvatar } from "./useSelectAvatar";
 
+export const GLOBAL_CHAT_ID = "buzz_global_general_channel";
+
 export const useSignup = () => {
 
     const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +32,13 @@ export const useSignup = () => {
                 blocked: []
             });
             await setDoc(doc(db, "userchats", res.user.uid), {
-                chats: []
+                chats: [{
+                    chatId: GLOBAL_CHAT_ID,
+                    isSeen: true, // Assuming user 'sees' global chat by default
+                    lastMessage: "Welcome to Buzz!", // Initial message for global chat
+                    chatName: "Global Buzz Chat", // Display name
+                    chatType: 'global' // Identify it as a global chat
+                }]
             });
 
             toast.success("Account created successfully! You can now login!");

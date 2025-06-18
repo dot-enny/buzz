@@ -36,7 +36,7 @@ body {
         input {
             @apply p-3 border-none outline-none bg-neutral-900 rounded;
         }
-        button {
+        button:not(.password-toggle) {
             @apply p-3 rounded border-none bg-blue-900 font-medium mt-4 disabled:bg-blue-950 relative;
         }
         a {

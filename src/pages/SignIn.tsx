@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { useSignin } from "../hooks/useSignin";
 import { Spinner } from "../components/ui/Spinner";
+import PasswordInput from "../components/ui/PasswordInput";
 
 export const SignIn = () => {
 
@@ -11,7 +12,7 @@ export const SignIn = () => {
       <h2>Welcome Back,</h2>
       <form onSubmit={handleSignin}>
         <input type="email" placeholder="Email" name="email" required />
-        <input type="password" placeholder="Password" name="password" required />
+        <PasswordInput />
         <Link to="" className="w-fit">Forgot Password ?</Link>
         <button disabled={isLoading}>
           <span className={`${isLoading && 'invisible'}`}>Sign In</span>
