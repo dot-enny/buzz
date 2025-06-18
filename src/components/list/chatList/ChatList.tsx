@@ -5,10 +5,11 @@ import AddUser from "./addUser/AddUser";
 import { useChatList } from "../../../hooks/useChatList";
 import { useChatStore } from "../../../lib/chatStore";
 import { useAppStateStore } from "../../../lib/appStateStore";
+import { useGlobalChatLastMessage } from "../../../hooks/useGlobalChatLastMessage";
 
 export const ChatList = () => {
 
-    const { isOpen, setIsOpen, setInput, filteredChats, handleSelectChat } = useChatList();
+    const { isOpen, setIsOpen, setInput, filteredChats, globalChat, handleSelectChat } = useChatList();
     // boolean value to open messaging area
     const { setIsChatOpen } = useAppStateStore();
 
@@ -23,6 +24,7 @@ export const ChatList = () => {
                 <SearchBar setInput={setInput} />
                 <AddUserButton setIsOpen={setIsOpen} />
             </div>
+            <GlobalChatItem chat={globalChat} onClick={handleChatClick} />
             {
                 filteredChats ?
                     filteredChats.map((chat) => (
@@ -41,6 +43,7 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
     const userBlocked = sender.blocked.includes(currentUser.id) || currentUser.blocked.includes(sender.id) || isCurrentUserBlocked || isReceiverBlocked;
     const lastMessagePreview = chat.lastMessage;
+    console.log(chat)
 
     return (
         <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
@@ -60,6 +63,41 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
                     (<>
                         <h2>{sender.username}</h2>
                         <p className="text-neutral-500 line-clamp-1">{lastMessagePreview}</p>
+                    </>) : (
+                        <div className="opacity-50">
+                            <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
+                            <div className="w-[200px] h-5 bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
+                        </div>
+                    )
+                }
+            </div>
+        </div>
+    )
+}
+
+interface GlobalChatProps {
+    chat: any,
+    onClick: (chat: any) => void
+}
+
+const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
+
+    const { isLoading, lastMessage } = useGlobalChatLastMessage();
+
+    return (
+        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800">
+            {!isLoading ?
+                <img
+                    src="./img/avatar-placeholder.png"
+                    alt="user"
+                    className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
+                <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+            }
+            <div>
+                {!isLoading ?
+                    (<>
+                        <h2>Global Buzz</h2>
+                        <p className="text-neutral-500 line-clamp-1">{lastMessage?.senderUsername}: {lastMessage?.text ?? 'Welcome to buzz global chat'}</p>
                     </>) : (
                         <div className="opacity-50">
                             <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />

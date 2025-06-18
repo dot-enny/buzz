@@ -7,9 +7,8 @@ import { useSignOut } from "../../hooks/useSignOut"
 
 export const Detail = () => {
 
-  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+  const { chatId, isGlobalChat, isReceiverBlocked } = useChatStore();
   const { handleBlock } = useBlockUser();
-  const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
   const { signOut } = useSignOut();
 
@@ -24,22 +23,18 @@ export const Detail = () => {
             </h3>
           </div>
         ) : (
-          <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
-            <img src={ !isBlocked ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-24 h-24 rounded-full object-cover" />
-            <h2>{ user.username }</h2>
-            <p className="text-neutral-500">{ isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : user.status }</p>
-          </div>
+          <ChatDetails />
         )
       }
 
       {/* CHAT MENU */}
       <div className="info p-5 flex-1 flex flex-col gap-7 overflow-y-auto">
-        { chatId && <Options /> }
+        {chatId && <Options />}
         <div className="absolute bottom-0 inset-x-0 frosted-glass py-5">
           <div className="flex">
-            { chatId && 
+            {(chatId && !isGlobalChat) &&
               <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
-                { isReceiverBlocked ? 'Unblock User' : 'Block User' }
+                {isReceiverBlocked ? 'Unblock User' : 'Block User'}
               </button>
             }
             <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
@@ -48,6 +43,31 @@ export const Detail = () => {
       </div>
     </div>
 
+  )
+}
+
+const ChatDetails = () => {
+  const { isGlobalChat, user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+  const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
+
+  return (
+    <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
+      {
+        isGlobalChat ? (
+          <>
+            <img src="./img/avatar-placeholder.png" alt="user" className="w-24 h-24 rounded-full object-cover" />
+            <h2>Global Buzz</h2>
+            <p className="text-neutral-500">Buzz all the way!</p>
+          </>
+        ) : (
+          <>
+            <img src={!isBlocked ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-24 h-24 rounded-full object-cover" />
+            <h2>{user.username}</h2>
+            <p className="text-neutral-500">{isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : user.status}</p>
+          </>
+        )
+      }
+    </div>
   )
 }
 

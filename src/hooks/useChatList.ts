@@ -9,7 +9,21 @@ export const useChatList = () => {
     const [chats, setChats] = useState<any[]>([]);
     const [input, setInput] = useState('');
 
-    const filteredChats = chats.filter((chat) => chat.user.username.toLowerCase().includes(input.toLowerCase()));
+    const filteredChats = chats.filter((chat) => { 
+        if (chat.chatType !== 'global' && chat.user) {
+            return chat.user.username.toLowerCase().includes(input.toLowerCase());
+        }
+        return false;
+    });
+    // const filteredGroupChats = chats.filter((chat) => chat.user.username.toLowerCase().includes(input.toLowerCase()));
+    const globalChat = chats.filter((chat => chat.chatType === 'global'))[0];
+    // const displayChats = [...globalChat, ...filteredChats]
+
+    // useEffect(() => {
+    //     console.log('globalChat', globalChat)
+    //     console.log('P2P', filteredChats)
+    //     console.log('allChats', chats)
+    // }, [globalChat, filteredChats, chats])
 
     const { currentUser } = useUserStore();
     const { changeChat, resetChat, chatId } = useChatStore();
@@ -29,12 +43,14 @@ export const useChatList = () => {
             const data = res.data();
             const items = data ? data.chats : [];
             const promises = items.map(async (item: UserChat) => {
-                const userDocRef = doc(db, "users", item.receiverId);
-                const userDocSnap = await getDoc(userDocRef);
-
-                const user = userDocSnap.data();
-
-                return { ...item, user };
+                if(item.receiverId) {
+                    const userDocRef = doc(db, "users", item.receiverId);
+                    const userDocSnap = await getDoc(userDocRef);
+    
+                    const user = userDocSnap.data();
+                    return { ...item, user };
+                }
+                return item;
             })
 
             const chatData = await Promise.all(promises);
@@ -64,6 +80,7 @@ export const useChatList = () => {
             return rest;
         });
 
+        // console.log(chat)
         const chatIndex = userChats.findIndex((item) => item.chatId === chat.chatId);
 
         userChats[chatIndex].isSeen = true;
@@ -85,6 +102,7 @@ export const useChatList = () => {
         setIsOpen,
         setInput,
         filteredChats,
+        globalChat,
         handleSelectChat,
     }
 }
