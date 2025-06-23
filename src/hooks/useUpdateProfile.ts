@@ -16,7 +16,7 @@ export const useUpdateProfile = () => {
         setIsLoading(true);
 
         try {
-            const imgUrl = await upload(userData.avatar.file as unknown as File);
+            const imgUrl = userData.avatar.file ? await upload(userData.avatar.file as unknown as File) : null;
             const userDoc = doc(userRef, currentUser.id);
             const userSnapshot = await getDoc(userDoc);
             if (userSnapshot.exists()) {
@@ -25,13 +25,14 @@ export const useUpdateProfile = () => {
                     ...existingUserData,
                     username: userData.username,
                     status: userData.status,
-                    avatar: imgUrl
+                    avatar: imgUrl ? imgUrl : ""
                 });
             }
 
             toast.success("Profile updated successfully!");
         } catch (err: any) {
             toast.error(err.message)
+            console.error(err)
         } finally {
             setIsLoading(false);
         }

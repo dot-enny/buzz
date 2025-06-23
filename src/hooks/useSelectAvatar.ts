@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { useUserStore } from "../lib/userStore";
 
-export const useSelectAvatar = () => {
-
+export const useSelectAvatar = (isOpen: boolean) => {
+    const { currentUser } = useUserStore();
     const [avatar, setAvatar] = useState<Avatar>({
         file: null,
-        url: "/img/avatar-placeholder.png"
+        url: ""
     });
 
     const selectAvatar = (e: any) => {
@@ -14,17 +15,15 @@ export const useSelectAvatar = () => {
                 url: URL.createObjectURL(e.target.files[0])
             });
     };
+    const removeAvatar = () => {
+        setAvatar({ file: null, url: "" })
+    }
 
     useEffect(() => {
-        if (!avatar.file) {
-            fetch(avatar.url)
-                .then(res => res.blob())
-                .then(blob => {
-                    const file = new File([blob], "avatar-placeholder.png", { type: "image/png" });
-                    setAvatar(prev => ({ ...prev, file }));
-                });
+        if (isOpen && !avatar.url && currentUser.avatar) {
+            setAvatar({ file: null, url: currentUser.avatar })
         }
-    }, []);
+    }, [isOpen])
 
-    return { avatar, selectAvatar };
+    return { avatar, selectAvatar, removeAvatar };
 }
