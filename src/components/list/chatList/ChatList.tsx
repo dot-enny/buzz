@@ -19,18 +19,20 @@ export const ChatList = () => {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1">
             <div className="flex items-center gap-5 p-5">
                 <SearchBar setInput={setInput} />
                 <AddUserButton setIsOpen={setIsOpen} />
             </div>
-            <GlobalChatItem chat={globalChat} onClick={handleChatClick} />
-            {
-                filteredChats ?
-                    filteredChats.map((chat) => (
-                        <ListItem key={chat.chatId} chat={chat} onClick={handleChatClick} isLoading={filteredChats.length === 0} />
-                    )) : <div className="text-white text-6xl">Loading...</div>
-            }
+            <div className="overflow-y-auto border border-red-400 max-h-max">
+                <GlobalChatItem chat={globalChat} onClick={handleChatClick} />
+                {
+                    filteredChats ?
+                        filteredChats.map((chat) => (
+                            <ListItem key={chat.chatId} chat={chat} onClick={handleChatClick} isLoading={filteredChats.length === 0} />
+                        )) : <div className="text-white text-6xl">Loading...</div>
+                }
+            </div>
             <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>
     )
@@ -43,17 +45,15 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
     const userBlocked = sender.blocked.includes(currentUser.id) || currentUser.blocked.includes(sender.id) || isCurrentUserBlocked || isReceiverBlocked;
     const lastMessagePreview = chat.lastMessage;
-    console.log(chat)
 
     return (
-        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800"
+        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
             style={{
                 backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
             }}
-        >
-            {!isLoading ?
+        >            {!isLoading ?
                 <img
-                    src={userBlocked ? './img/avatar-placeholder.png' : sender.avatar}
+                    src={userBlocked || !sender.avatar ? '/img/avatar-placeholder.png' : sender.avatar}
                     alt="user"
                     className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
                 <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
@@ -71,6 +71,7 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
                     )
                 }
             </div>
+            {/* { !chat.isSeen && <span className="absolute z-20 text-white flex items-center justify-center top-4 right-4 rounded-full bg-blue-900 size-6 text-xs">{chat.unread}</span> } */}
         </div>
     )
 }
@@ -84,11 +85,10 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
 
     const { isLoading, lastMessage } = useGlobalChatLastMessage();
 
-    return (
-        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800">
+    return (        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800">
             {!isLoading ?
                 <img
-                    src="./img/avatar-placeholder.png"
+                    src="/img/avatar-placeholder.png"
                     alt="user"
                     className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
                 <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
