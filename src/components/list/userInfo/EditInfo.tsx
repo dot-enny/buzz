@@ -1,11 +1,13 @@
 'use client'
 
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { CameraIcon, UserCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { CameraIcon, TrashIcon, UserCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useSelectAvatar } from '../../../hooks/useSelectAvatar';
 import { useUpdateProfile } from '../../../hooks/useUpdateProfile';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useRef, useState } from 'react';
 import { useUserStore } from '../../../lib/userStore';
+import { Spinner } from '../../ui/Spinner';
+import { classNames } from '../../../utils/helpers';
 
 interface EditInfoProps {
     isOpen: boolean;
@@ -15,7 +17,7 @@ interface EditInfoProps {
 export default function EditInfo({ isOpen, setIsOpen }: EditInfoProps) {
 
     const { currentUser, fetchUserInfo } = useUserStore();
-    const { avatar, selectAvatar } = useSelectAvatar();
+    const { avatar, selectAvatar, removeAvatar } = useSelectAvatar(isOpen);
     const { updateProfile, updatingProfile } = useUpdateProfile();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +70,7 @@ export default function EditInfo({ isOpen, setIsOpen }: EditInfoProps) {
                         </div>
 
                         <div className="p-4 mt-2">
-                            <DialogContent selectAvatar={selectAvatar} avatar={avatar} handleSubmit={handleSubmit} isLoading={updatingProfile} />
+                            <DialogContent selectAvatar={selectAvatar} removeAvatar={removeAvatar} avatar={avatar} handleSubmit={handleSubmit} isLoading={updatingProfile} />
                         </div>
                     </DialogPanel>
                 </div>
@@ -81,34 +83,58 @@ interface DialogContentProps {
     selectAvatar: (e: any) => void;
     avatar: Avatar;
     handleSubmit: FormEventHandler<HTMLFormElement>;
+    removeAvatar: () => void;
     isLoading: boolean;
 }
 
-const DialogContent = ({ selectAvatar, avatar, handleSubmit, isLoading }: DialogContentProps) => {
+const DialogContent = ({ selectAvatar, avatar, handleSubmit, removeAvatar, isLoading }: DialogContentProps) => {
+    const { currentUser } = useUserStore();
+    const [isInfoChanged, setIsInfoChanged] = useState(false);
+    const avatarRef = useRef(null);
+
+    const handleRemoveAvatar = () => {
+        if (avatarRef.current) (avatarRef.current as HTMLInputElement).value = '';
+        removeAvatar();
+        setIsInfoChanged(true)
+    }
+
+    const handleSelectAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setIsInfoChanged(true)
+        selectAvatar(e);
+    }
 
     return (
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-            <label htmlFor="avatar" className="mx-auto relative cursor-pointer">
-                <img src={avatar.url || '/img/avatar-placeholder.png'} alt="Profile Picture" className="size-20 rounded-full object-cover" />
-                <div className="mix-blend-multiply hover:bg-gray-400 transition-all size-20 rounded-full grid place-items-center absolute top-0">
-                    <CameraIcon className="size-5" />
-                </div>
-                <input type="file" id="avatar" className="hidden" onChange={selectAvatar} />
-            </label>
+            <div className="relative flex justify-center">
+                <label htmlFor="avatar" className="mx-auto relative cursor-pointer">
+                    <img src={avatar.url ? avatar.url : './img/avatar-placeholder.png' } alt="Profile Picture" className="size-20 rounded-full object-cover" />
+                    <div className="mix-blend-multiply hover:bg-gray-400 transition-all size-20 rounded-full grid place-items-center absolute top-0">
+                        <CameraIcon className="size-5" />
+                    </div>
+                    <input type="file" id="avatar" ref={avatarRef} className="hidden" onChange={handleSelectAvatar} />
+                </label>
+                {
+                    avatar.url &&
+                    <button type="button" className="hover:scale-105 duration-500 absolute bottom-0 translate-x-[140%]" onClick={handleRemoveAvatar}>
+                        <TrashIcon className="size-5 text-neutral-300" />
+                    </button>
+                }
+            </div>
             <label htmlFor="username" className="text-sm flex gap-3 items-center">
                 <span className="min-w-max">Username :</span>
-                <input type="text" name="username" className="bg-neutral-800 p-3 rounded-lg border-none outline-none w-full" />
+                <input type="text" name="username" defaultValue={currentUser.username} onChange={() => setIsInfoChanged(true)} className="bg-neutral-800 p-3 rounded-lg border-none outline-none w-full" />
             </label>
             <label htmlFor="status" className="text-sm flex gap-3 items-center">
                 <span className="min-w-max">Status :</span>
-                <input type="text" name="status" className="bg-neutral-800 p-3 rounded-lg border-none outline-none w-[80%]" />
+                <input type="text" name="status" defaultValue={currentUser.status} onChange={() => setIsInfoChanged(true)} className="bg-neutral-800 p-3 rounded-lg border-none outline-none w-[80%]" />
             </label>
             <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                 <button
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                    disabled={isLoading}
+                    className="relative mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto disabled:opacity-20 disabled:text-gray-500 disabled:ring-0 disabled:cursor-not-allowed transition-all"
+                    disabled={isLoading || !isInfoChanged}
                 >
-                    {isLoading ? 'Updating...' : 'Update'}
+                    <Spinner className={classNames(isLoading ? 'visible' : 'invisible', 'absolute')} />
+                    <span className={isLoading ? 'invisible' : 'visible'}>Update</span>
                 </button>
             </div>
         </form>
