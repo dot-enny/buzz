@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUserStore } from "../lib/userStore";
 
-export const useSelectAvatar = (isOpen: boolean) => {
+export const useSelectAvatar = (isOpen?: boolean) => {
     const { currentUser } = useUserStore();
     const [avatar, setAvatar] = useState<Avatar>({
         file: null,
