@@ -21,14 +21,14 @@ export const ChatList = () => {
 
     return (
         <div className="flex-1">
-            <div className="fixed frosted-glass">
+            <div className="sticky top-0 frosted-glass">
                 <UserInfo />
                 <div className="flex items-center gap-5 p-5">
                     <SearchBar setInput={setInput} />
                     <AddUserButton setIsOpen={setIsOpen} />
                 </div>
             </div>
-            <div className="pt-40">
+            <div>
                 <GlobalChatItem chat={globalChat} onClick={handleChatClick} />
                 {
                     filteredChats ?
