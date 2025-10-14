@@ -48,7 +48,7 @@ const DrawerHeader = ({ setIsOpen }: { setIsOpen: (val: boolean) => void }) => (
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="relative rounded-md hover:text-gray-500 focus:ring-2 focus:ring-indigo-500"
+            className="relative rounded-md hover:text-gray-500 focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <span className="absolute -inset-2.5" />
             <span className="sr-only">Close panel</span>
