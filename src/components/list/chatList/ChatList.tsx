@@ -21,7 +21,7 @@ export const ChatList = () => {
 
     return (
         <div className="flex-1">
-            <div className="fixed bg-neutral-950">
+            <div className="fixed frosted-glass">
                 <UserInfo />
                 <div className="flex items-center gap-5 p-5">
                     <SearchBar setInput={setInput} />
