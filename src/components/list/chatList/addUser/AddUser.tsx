@@ -1,5 +1,3 @@
-'use client'
-
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { ArrowPathIcon, CheckBadgeIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAddUser } from '../../../../hooks/useAddUser'
@@ -50,7 +48,7 @@ const DrawerHeader = ({ setIsOpen }: { setIsOpen: (val: boolean) => void }) => (
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="relative rounded-md hover:text-gray-500 focus:ring-2 focus:ring-indigo-500"
+            className="relative rounded-md hover:text-gray-500 focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <span className="absolute -inset-2.5" />
             <span className="sr-only">Close panel</span>
@@ -76,8 +74,8 @@ const UserListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdde
       <div className="-m-1 block flex-1 p-1">
         {/* <div aria-hidden="true" className="absolute inset-0 group-hover:bg-gray-800" /> */}
         <div className="relative flex min-w-0 flex-1 items-center">
-          <TeamListItemImage user={user} />
-          <TeamListItemDetails user={user} />
+          <UserListItemImage user={user} />
+          <UserListItemDetails user={user} />
         </div>
       </div>
       {/* <DrawerTeamListItemMenu /> */}
@@ -94,9 +92,9 @@ const UserListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdde
   </li>
 )
 
-const TeamListItemImage = ({ user }: { user: User }) => (
+const UserListItemImage = ({ user }: { user: User }) => (
   <span className="relative inline-block shrink-0">
-    <img alt="" src={user.avatar} className="size-10 rounded-full object-cover" />
+    <img alt="" src={user.avatar || './img/avatar-placeholder.png'} className="size-10 rounded-full object-cover" />
     {/* <span
       aria-hidden="true"
       className={classNames(
@@ -107,7 +105,7 @@ const TeamListItemImage = ({ user }: { user: User }) => (
   </span>
 )
 
-const TeamListItemDetails = ({ user }: { user: User }) => (
+const UserListItemDetails = ({ user }: { user: User }) => (
   <div className="ml-4 truncate">
     <p className="truncate text-sm font-medium text-gray-100">{user.username}</p>
     <p className="truncate text-sm text-gray-500">{user.status}</p>

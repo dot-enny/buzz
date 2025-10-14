@@ -47,7 +47,6 @@ export const useAddUser = () => {
     // }
 
     const fetchUsers = async () => {
-        console.log('fetchUsers')
         setIsLoading(true);
         try {
             const userRef = collection(db, "users");

@@ -58,4 +58,14 @@ body {
     -webkit-backdrop-filter: blur (6px); */
 }
 
+/* For Webkit-based browsers (Chrome, Safari, newer versions of Edge) */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Hides the scrollbar */
+}
+
+/* For Firefox */
+.hide-scrollbar {
+    scrollbar-width: none; /* Hides the scrollbar */
+}
+
 
