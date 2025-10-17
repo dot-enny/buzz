@@ -16,7 +16,7 @@ export default function Home() {
       <div className={`
         md:flex-1 lg:flex-[2] min-h-screen
         max-md:fixed max-md:inset-0 max-md:z-10 max-md:bg-neutral-950
-        max-md:transition-transform max-md:duration-300 max-md:ease-in-out
+        max-md:transition-transform max-md:duration-500 max-md:ease-in-out
         ${!isChatOpen ? 'max-md:translate-x-full' : 'max-md:translate-x-0'}
       `}>
         <Chat />
