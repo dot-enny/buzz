@@ -3,15 +3,19 @@ import { Chat } from "../components/chat/Chat";
 import { Detail } from "../components/detail/Detail";
 import MobileDetail from "../components/detail/MobileDetail";
 import { useAppStateStore } from "../lib/appStateStore";
-import { useDragToClose } from "../hooks/useDragToClose";
+import { useDragChatPanel } from "../hooks/useDragChatPanel";
+import { useChatStore } from "../lib/chatStore";
 
 export default function Home() {
 
-  const { isChatOpen, setIsChatOpen } = useAppStateStore();
+  const { isChatOpen, setIsChatOpen, setIsChatDetailOpen } = useAppStateStore();
+  const { chatId } = useChatStore();
   
-  const { dragOffset, isDragging, handlers } = useDragToClose({
+  const { dragOffset, isDragging, handlers } = useDragChatPanel({
     onClose: () => setIsChatOpen(false),
+    onOpenDetail: () => setIsChatDetailOpen(true),
     isOpen: isChatOpen,
+    hasChatActive: !!chatId,
     threshold: 100,
   });
 
@@ -27,7 +31,7 @@ export default function Home() {
           ${!isChatOpen ? 'max-md:translate-x-full' : 'max-md:translate-x-0'}
         `}
         style={{
-          transform: isChatOpen && dragOffset > 0 
+          transform: isChatOpen && dragOffset !== 0 
             ? `translateX(${dragOffset}px)` 
             : undefined,
           transition: isDragging ? 'none' : 'transform 500ms ease-in-out',

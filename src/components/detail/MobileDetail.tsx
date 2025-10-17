@@ -4,9 +4,16 @@ import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useAppStateStore } from '../../lib/appStateStore'
 import { Detail } from './Detail'
+import { useDragDetailPanel } from '../../hooks/useDragDetailPanel'
 
 export default function MobileDetail() {
   const { isChatDetailOpen, setIsChatDetailOpen } = useAppStateStore()
+  
+  const { dragOffset, isDragging, handlers } = useDragDetailPanel({
+    onClose: () => setIsChatDetailOpen(false),
+    isOpen: isChatDetailOpen,
+    threshold: 100,
+  })
 
   return (
     <Dialog open={isChatDetailOpen} onClose={setIsChatDetailOpen} className="relative z-10 xl:hidden h-[100svh]">
@@ -21,6 +28,13 @@ export default function MobileDetail() {
             <DialogPanel
               transition
               className="pointer-events-auto w-screen max-w-md transform transition duration-500 ease-in-out data-[closed]:translate-x-full sm:duration-700"
+              style={{
+                transform: isChatDetailOpen && dragOffset > 0 
+                  ? `translateX(${dragOffset}px)` 
+                  : undefined,
+                transition: isDragging ? 'none' : 'transform 500ms ease-in-out',
+              }}
+              {...handlers}
             >
               <div className="flex h-full flex-col overflow-y-scrol bg-neutral-900 shadow-xl relative">
                 <button
