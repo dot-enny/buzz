@@ -4,6 +4,7 @@ import { IconDownload } from "../icons/IconDownload"
 import { useChatStore } from "../../lib/chatStore"
 import { useBlockUser } from "../../hooks/chat-details/useBlockUser"
 import { useSignOut } from "../../hooks/useSignOut"
+import { ArrowLeftStartOnRectangleIcon } from "@heroicons/react/24/outline"
 
 export const Detail = () => {
 
@@ -37,7 +38,10 @@ export const Detail = () => {
                 {isReceiverBlocked ? 'Unblock User' : 'Block User'}
               </button>
             }
-            <button onClick={signOut} className="mt-1 text-red-500 w-fit mx-auto">Logout</button>
+            <button onClick={signOut} className="flex items-center gap-x-1 mt-1 text-red-500 w-fit mx-auto">
+              <ArrowLeftStartOnRectangleIcon className="text-red-500 size-5" />
+              Logout
+            </button>
           </div>
         </div>
       </div>
