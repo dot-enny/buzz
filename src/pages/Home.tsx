@@ -31,7 +31,7 @@ export default function Home() {
           ${!isChatOpen ? 'max-md:translate-x-full' : 'max-md:translate-x-0'}
         `}
         style={{
-          transform: isChatOpen && dragOffset !== 0 
+          transform: isChatOpen && dragOffset > 0 
             ? `translateX(${dragOffset}px)` 
             : undefined,
           transition: isDragging ? 'none' : 'transform 500ms ease-in-out',
