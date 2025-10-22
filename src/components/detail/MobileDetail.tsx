@@ -9,7 +9,7 @@ import { useDragDetailPanel } from '../../hooks/useDragDetailPanel'
 export default function MobileDetail() {
   const { isChatDetailOpen, setIsChatDetailOpen } = useAppStateStore()
   
-  const { dragOffset, isDragging, handlers } = useDragDetailPanel({
+  const { dragOffset, isDragging, isClosing, handlers } = useDragDetailPanel({
     onClose: () => setIsChatDetailOpen(false),
     isOpen: isChatDetailOpen,
     threshold: 100,
@@ -19,7 +19,7 @@ export default function MobileDetail() {
     <Dialog open={isChatDetailOpen} onClose={() => setIsChatDetailOpen(false)} className="relative z-10 xl:hidden h-[100svh]">
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-[closed]:opacity-0"
+        className="fixed inset-0 bg-gray-500/75 transition-opacity duration-300 data-[closed]:opacity-0"
       />
 
       <div className="fixed inset-0 overflow-hidden">
@@ -27,12 +27,12 @@ export default function MobileDetail() {
           <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
             <DialogPanel
               transition
-              className="pointer-events-auto w-screen max-w-md transform transition duration-500 ease-in-out data-[closed]:translate-x-full sm:duration-700"
+              className="pointer-events-auto w-screen max-w-md transform duration-300 data-[closed]:translate-x-full"
               style={
-                isDragging && isChatDetailOpen
+                (isDragging || isClosing) && dragOffset > 0
                   ? {
                       transform: `translateX(${dragOffset}px)`,
-                      transition: 'none',
+                      transition: isDragging ? 'none' : undefined,
                     }
                   : undefined
               }
