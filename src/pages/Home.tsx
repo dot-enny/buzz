@@ -34,7 +34,7 @@ export default function Home() {
           transform: isChatOpen && dragOffset > 0 
             ? `translateX(${dragOffset}px)` 
             : undefined,
-          transition: isDragging ? 'none' : 'transform 500ms ease-in-out',
+          transition: isDragging ? 'none' : 'transform 300ms',
         }}
         {...handlers}
       >
