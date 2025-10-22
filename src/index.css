@@ -26,7 +26,7 @@ body {
     @apply h-screen flex justify-center items-center;
 
     >div {
-        @apply grid gap-10 items-center md:w-1/4;
+        @apply grid gap-10 items-center max-sm:w-4/5 md:w-1/4 md:min-w-max;
     }
     h2 {
         @apply text-xl font-bold mx-auto; 
@@ -45,7 +45,7 @@ body {
     }
 }
 .auth-form__secondary-cta {
-    @apply text-sm flex justify-between;
+    @apply text-sm flex justify-between gap-x-4;
 }
 
 .message {
