@@ -16,7 +16,7 @@ export default function MobileDetail() {
   })
 
   return (
-    <Dialog open={isChatDetailOpen} onClose={setIsChatDetailOpen} className="relative z-10 xl:hidden h-[100svh]">
+    <Dialog open={isChatDetailOpen} onClose={() => setIsChatDetailOpen(false)} className="relative z-10 xl:hidden h-[100svh]">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-[closed]:opacity-0"
@@ -26,14 +26,16 @@ export default function MobileDetail() {
         <div className="absolute inset-0 overflow-hidden">
           <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
             <DialogPanel
-              {...(!isDragging && { transition: true })}
+              transition
               className="pointer-events-auto w-screen max-w-md transform transition duration-500 ease-in-out data-[closed]:translate-x-full sm:duration-700"
-              style={{
-                transform: isChatDetailOpen && dragOffset > 0 
-                  ? `translateX(${dragOffset}px)` 
-                  : undefined,
-                transition: isDragging ? 'none' : 'transform 500ms ease-in-out',
-              }}
+              style={
+                isDragging && isChatDetailOpen
+                  ? {
+                      transform: `translateX(${dragOffset}px)`,
+                      transition: 'none',
+                    }
+                  : undefined
+              }
               {...handlers}
             >
               <div className="flex h-full flex-col overflow-y-scrol bg-neutral-900 shadow-xl relative">
