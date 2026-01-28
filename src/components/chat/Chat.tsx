@@ -2,9 +2,13 @@ import { useChatStore } from "../../lib/chatStore"
 import { TopBar } from "./chat-sections/TopBar"
 import { Messages } from "./chat-sections/Messages"
 import { ComposeMessage } from "./chat-sections/ComposeMessaage"
+import { useMarkMessagesAsRead } from "../../hooks/chat/useMarkMessagesAsRead"
 
 export const Chat = () => {
   const { chatId } = useChatStore();
+  
+  // Mark messages as read when chat is viewed
+  useMarkMessagesAsRead();
 
   return (
     <div className="h-[100svh] flex flex-col flex-[2] border-l border-r border-neutral-800 relative">

@@ -1,16 +1,21 @@
 import { IconSearch } from "../../icons/IconSearch"
 import { useUserStore } from "../../../lib/userStore";
-import { UserPlusIcon } from "@heroicons/react/24/outline";
+import { UserPlusIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import AddUser from "./addUser/AddUser";
+import CreateGroup from "./createGroup/CreateGroup";
 import { useChatList } from "../../../hooks/useChatList";
 import { useChatStore } from "../../../lib/chatStore";
 import { useAppStateStore } from "../../../lib/appStateStore";
 import { useGlobalChatLastMessage } from "../../../hooks/useGlobalChatLastMessage";
 import { UserInfo } from "../userInfo/UserInfo";
+import { useState } from "react";
 
 export const ChatList = () => {
 
-    const { isOpen, setIsOpen, setInput, filteredChats, globalChat, handleSelectChat } = useChatList();
+    const { setInput, filteredChats, globalChat, handleSelectChat } = useChatList();
+    const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+    const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+    
     // boolean value to open messaging area
     const { setIsChatOpen } = useAppStateStore();
 
@@ -25,7 +30,10 @@ export const ChatList = () => {
                 <UserInfo />
                 <div className="flex items-center gap-5 p-5">
                     <SearchBar setInput={setInput} />
-                    <AddUserButton setIsOpen={setIsOpen} />
+                    <div className="flex items-center gap-3">
+                        <CreateGroupButton setIsOpen={setIsCreateGroupOpen} />
+                        <AddUserButton setIsOpen={setIsAddUserOpen} />
+                    </div>
                 </div>
             </div>
             <div>
@@ -37,16 +45,27 @@ export const ChatList = () => {
                         )) : <div className="text-white text-6xl">Loading...</div>
                 }
             </div>
-            <AddUser isOpen={isOpen} setIsOpen={setIsOpen} />
+            <AddUser isOpen={isAddUserOpen} setIsOpen={setIsAddUserOpen} />
+            <CreateGroup isOpen={isCreateGroupOpen} setIsOpen={setIsCreateGroupOpen} />
         </div>
     )
 }
 
 
 const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any) => void, isLoading: boolean }) => {
-    const sender = chat.user;
     const { currentUser } = useUserStore();
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+    const unreadCount = chat.unreadCount || 0;
+    
+    // Check if it's a group chat
+    const isGroupChat = chat.type === 'group';
+    
+    if (isGroupChat) {
+        return <GroupChatItem chat={chat} onClick={onClick} isLoading={isLoading} />;
+    }
+    
+    // Regular 1-on-1 chat
+    const sender = chat.user;
     const userBlocked = sender.blocked.includes(currentUser.id) || currentUser.blocked.includes(sender.id) || isCurrentUserBlocked || isReceiverBlocked;
     const lastMessagePreview = chat.lastMessage;
 
@@ -62,7 +81,7 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
                 className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
             <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
             }
-            <div>
+            <div className="flex-1">
                 {!isLoading ?
                     (<>
                         <h2>{sender.username}</h2>
@@ -75,10 +94,74 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
                     )
                 }
             </div>
-            {/* { !chat.isSeen && <span className="absolute z-20 text-white flex items-center justify-center top-4 right-4 rounded-full bg-blue-900 size-6 text-xs">{chat.unread}</span> } */}
+            {/* Unread count badge */}
+            {unreadCount > 0 && (
+                <span className="flex items-center justify-center rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white min-w-[1.25rem]">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+            )}
         </div>
     )
 }
+
+const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any) => void, isLoading: boolean }) => {
+    const lastMessagePreview = chat.lastMessage;
+    const unreadCount = chat.unreadCount || 0;
+    const groupName = chat.groupName || 'Unnamed Group';
+    const groupPhoto = chat.groupPhotoURL;
+
+    return (
+        <div 
+            onClick={() => onClick(chat)} 
+            className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
+            style={{
+                backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
+            }}
+        >
+            {!isLoading ? (
+                <div className="relative min-w-12 max-w-12 h-12">
+                    {groupPhoto ? (
+                        <img
+                            src={groupPhoto}
+                            alt={groupName}
+                            className="w-full h-full rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                            <UserGroupIcon className="w-6 h-6 text-white" />
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+            )}
+            
+            <div className="flex-1">
+                {!isLoading ? (
+                    <>
+                        <div className="flex items-center gap-2">
+                            <h2>{groupName}</h2>
+                            <UserGroupIcon className="w-4 h-4 text-neutral-500" />
+                        </div>
+                        <p className="text-neutral-500 line-clamp-1">{lastMessagePreview || 'No messages yet'}</p>
+                    </>
+                ) : (
+                    <div className="opacity-50">
+                        <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
+                        <div className="w-[200px] h-5 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
+                    </div>
+                )}
+            </div>
+            
+            {/* Unread count badge */}
+            {unreadCount > 0 && (
+                <span className="flex items-center justify-center rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white min-w-[1.25rem]">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+            )}
+        </div>
+    );
+};
 
 interface GlobalChatProps {
     chat: any,
@@ -128,9 +211,17 @@ const SearchBar = ({ setInput }: { setInput: (input: string) => void }) => {
     )
 }
 
+const CreateGroupButton = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
+    return (
+        <button onClick={() => setIsOpen(true)} className="cursor-pointer" title="Create Group">
+            <UserGroupIcon className="text-white size-6" />
+        </button>
+    )
+}
+
 const AddUserButton = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
     return (
-        <button onClick={() => setIsOpen(true)} className="cursor-pointer">
+        <button onClick={() => setIsOpen(true)} className="cursor-pointer" title="Add User">
             <UserPlusIcon className="text-white size-6" />
         </button>
     )

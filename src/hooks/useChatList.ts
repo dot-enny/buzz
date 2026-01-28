@@ -80,11 +80,11 @@ export const useChatList = () => {
             return rest;
         });
 
-        // console.log(chat)
         const chatIndex = userChats.findIndex((item) => item.chatId === chat.chatId);
 
+        // Mark as seen and reset unread count
         userChats[chatIndex].isSeen = true;
-        userChats[chatIndex].unread = 0;
+        userChats[chatIndex].unreadCount = 0;
 
         const userChatsRef = doc(db, "userchats", currentUser.id);
 
@@ -92,7 +92,18 @@ export const useChatList = () => {
             await updateDoc(userChatsRef, {
                 chats: userChats,
             });
-            changeChat(chat.chatId, chat.user);
+            
+            // Pass chat type and group data if it's a group chat
+            if (chat.type === 'group') {
+                changeChat(chat.chatId, null, 'group', {
+                    groupName: chat.groupName,
+                    groupPhotoURL: chat.groupPhotoURL,
+                    participants: chat.participants,
+                    admins: chat.admins,
+                });
+            } else {
+                changeChat(chat.chatId, chat.user);
+            }
         } catch (err) {
             console.log(err);
         };
