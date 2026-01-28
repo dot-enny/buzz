@@ -6,8 +6,8 @@ import React from "react";
 import { Spinner } from "../../ui/Spinner";
 import { motion } from "framer-motion";
 import { classNames } from "../../../utils/helpers";
-import { groupMessagesByDate } from "../../../utils/dateHelpers";
 import { CheckIcon } from "@heroicons/react/24/outline";
+import { groupMessagesByDate } from "../../../utils/dateHelpers";
 
 interface MessageProps {
     id: string;
@@ -33,7 +33,7 @@ export const Messages = () => {
         <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
             {messages ? (
                 <>
-                    {groupedMessages.map((group) => (
+                    {groupedMessages.map((group: { date: string; messages: any[] }) => (
                         <div key={group.date} className="flex flex-col gap-5">
                             {/* Date Separator */}
                             <DateSeparator date={group.date} />
