@@ -13,7 +13,7 @@ export interface Img {
 
 export const useComposeMessage = () => {
     const { currentUser } = useUserStore();
-    const { chatId, user } = useChatStore();
+    const { chatId, user, isGroupChat, groupData } = useChatStore();
 
     const [openEmoji, setOpenEmoji] = useState(false);
     const [text, setText] = useState('');
@@ -67,8 +67,13 @@ export const useComposeMessage = () => {
                 senderId: currentUser.id,
                 text: textMessage,
                 createdAt: new Date(),
+                readBy: [], // Initialize empty readBy array for read receipts
                 ...(imgUrl && { img: imgUrl }),
-                ...(chatId === GLOBAL_CHAT_ID && { senderUsername: currentUser.username, senderAvatar: currentUser.avatar })
+                // Include sender info for group and global chats
+                ...((isGroupChat || chatId === GLOBAL_CHAT_ID) && { 
+                    senderUsername: currentUser.username, 
+                    senderAvatar: currentUser.avatar 
+                })
             };
 
             const newMessageRef = doc(messagesCollectionRef);
@@ -77,6 +82,41 @@ export const useComposeMessage = () => {
     };
 
     const updateUserChats = async () => {
+        // For group chats, update all participants
+        if (isGroupChat && groupData?.participants) {
+            const participants = groupData.participants;
+            
+            participants.forEach(async (userId: string) => {
+                const userChatsRef = doc(db, "userchats", userId);
+                const userChatsSnapshot = await getDoc(userChatsRef);
+
+                if (userChatsSnapshot.exists()) {
+                    const userChatsData = userChatsSnapshot.data();
+                    const chatIndex = userChatsData.chats.findIndex((chat: UserChat) => chat.chatId === chatId);
+
+                    if (chatIndex !== -1) {
+                        userChatsData.chats[chatIndex].lastMessage = text;
+                        userChatsData.chats[chatIndex].isSeen = userId === currentUser.id ? true : false;
+                        
+                        if (userId === currentUser.id) {
+                            userChatsData.chats[chatIndex].unreadCount = 0;
+                        } else {
+                            userChatsData.chats[chatIndex].unreadCount = 
+                                (userChatsData.chats[chatIndex].unreadCount || 0) + 1;
+                        }
+                        
+                        userChatsData.chats[chatIndex].updatedAt = Date.now();
+
+                        await updateDoc(userChatsRef, {
+                            chats: userChatsData.chats,
+                        });
+                    }
+                }
+            });
+            return;
+        }
+        
+        // For 1-on-1 chats
         if(!user) return;
         if(user.id === undefined) return;
         
@@ -91,7 +131,18 @@ export const useComposeMessage = () => {
                 const chatIndex = userChatsData.chats.findIndex((chat: UserChatDocWithReceiverInfo) => chat.chatId === chatId);
 
                 userChatsData.chats[chatIndex].lastMessage = text;
+                
+                // Mark as seen for sender, unseen for receiver
                 userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+                
+                // Increment unread count for receiver, reset for sender
+                if (id === currentUser.id) {
+                    userChatsData.chats[chatIndex].unreadCount = 0;
+                } else {
+                    userChatsData.chats[chatIndex].unreadCount = 
+                        (userChatsData.chats[chatIndex].unreadCount || 0) + 1;
+                }
+                
                 userChatsData.chats[chatIndex].updatedAt = Date.now();
 
                 await updateDoc(userChatsRef, {
@@ -99,26 +150,6 @@ export const useComposeMessage = () => {
                 });
             };
         });
-
-        // for (const id of userIDs) {
-        //     const userChatsRef = doc(db, "userchats", id);
-        //     const userChatsSnapshot = await getDoc(userChatsRef);
-
-        //     if (userChatsSnapshot.exists()) {
-        //         const userChatsData = userChatsSnapshot.data();
-        //         const chatIndex = userChatsData.chats.findIndex((chat: any) => chat.chatId === chatId);
-
-        //         if (chatIndex !== -1) {
-        //             userChatsData.chats[chatIndex].lastMessage = text;
-        //             userChatsData.chats[chatIndex].isSeen = id === currentUser.id;
-        //             userChatsData.chats[chatIndex].updatedAt = Date.now();
-
-        //             await updateDoc(userChatsRef, {
-        //                 chats: userChatsData.chats,
-        //             });
-        //         }
-        //     }
-        // }
     };
 
     const resetInput = () => {

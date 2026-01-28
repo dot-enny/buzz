@@ -5,11 +5,13 @@ import { GLOBAL_CHAT_ID } from '../hooks/useSignup';
 interface ChatStore {
     chatId: string | null;
     isGlobalChat: boolean;
+    isGroupChat: boolean;
     user: any;
+    groupData: any;
     isCurrentUserBlocked: boolean,
     isReceiverBlocked: boolean,
     isLoading: boolean,
-    changeChat: (chatId: string, user: any) => void;
+    changeChat: (chatId: string, user: any, chatType?: string, groupData?: any) => void;
     resetChat: () => void;
     changeBlock: () => void;
 }
@@ -17,20 +19,37 @@ interface ChatStore {
 export const useChatStore = create<ChatStore>((set) => ({
     chatId: null,
     isGlobalChat: false,
+    isGroupChat: false,
     user: null,
+    groupData: null,
     isCurrentUserBlocked: false,
     isReceiverBlocked: false,
     isLoading: false,
-    changeChat: (chatId: string, user: any) => {
+    changeChat: (chatId: string, user: any, chatType?: string, groupData?: any) => {
         const isGlobalChat = chatId === GLOBAL_CHAT_ID;
+        const isGroupChat = chatType === 'group';
         set({ isLoading: true });
         const currentUser = useUserStore.getState().currentUser;
+        
         if (isGlobalChat) {
             set({
                 chatId,
                 isGlobalChat: true,
+                isGroupChat: false,
                 isLoading: false,
                 user: null,
+                groupData: null,
+                isCurrentUserBlocked: false,
+                isReceiverBlocked: false,
+            })
+        } else if (isGroupChat) {
+            set({
+                chatId,
+                isGlobalChat: false,
+                isGroupChat: true,
+                user: null,
+                groupData,
+                isLoading: false,
                 isCurrentUserBlocked: false,
                 isReceiverBlocked: false,
             })
@@ -38,7 +57,9 @@ export const useChatStore = create<ChatStore>((set) => ({
             set({
                 chatId,
                 isGlobalChat: false,
+                isGroupChat: false,
                 user,
+                groupData: null,
                 isCurrentUserBlocked: user.blocked.includes(currentUser.id),
                 isReceiverBlocked: currentUser.blocked.includes(user.id),
                 isLoading: false,
@@ -49,6 +70,9 @@ export const useChatStore = create<ChatStore>((set) => ({
         set({
             chatId: null,
             user: null,
+            groupData: null,
+            isGlobalChat: false,
+            isGroupChat: false,
             isCurrentUserBlocked: false,
             isReceiverBlocked: false,
             isLoading: false,

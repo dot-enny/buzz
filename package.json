@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prune-branches": "git fetch --prune && powershell -Command \"$goneBranches = git branch -vv | Select-String ': gone]' | ForEach-Object { if ($_.Line -match '^\\\\s*(\\\\S+)') { $matches[1] } }; foreach ($branch in $goneBranches) { git branch -D $branch }\""
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",

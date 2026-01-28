@@ -31,7 +31,6 @@ export const useUpdateMessages = () => {
                 snapshot.forEach((doc) => {
                     fetchedMessages.push({ id: doc.id, ...doc.data() as Omit<any, 'id'> });
                 });
-                console.log(fetchedMessages);
                 setMessages(fetchedMessages);
             }, (err) => {
                 console.error("Error fetching messages:", err);
