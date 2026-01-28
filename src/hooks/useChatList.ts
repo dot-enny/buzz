@@ -84,6 +84,7 @@ export const useChatList = () => {
         const chatIndex = userChats.findIndex((item) => item.chatId === chat.chatId);
 
         userChats[chatIndex].isSeen = true;
+        userChats[chatIndex].unread = 0;
 
         const userChatsRef = doc(db, "userchats", currentUser.id);
 

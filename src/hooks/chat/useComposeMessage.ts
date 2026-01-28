@@ -91,12 +91,20 @@ export const useComposeMessage = () => {
                 const chatIndex = userChatsData.chats.findIndex((chat: UserChatDocWithReceiverInfo) => chat.chatId === chatId);
 
                 userChatsData.chats[chatIndex].lastMessage = text;
-                userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+                console.log(chatId, userChatsData.chats[chatIndex].chatId)
+                // if(chatId !== userChatsData.chats[chatIndex].chatId) {
+                //     console.log('inside of if')
+                    userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+                // }
+                // if(id !== currentUser.id) {
+                //     userChatsData.chats[chatIndex].unread =  !userChatsData.chats[chatIndex].unread ? 1 : userChatsData.chats[chatIndex].unread + 1; 
+                // }
                 userChatsData.chats[chatIndex].updatedAt = Date.now();
 
                 await updateDoc(userChatsRef, {
                     chats: userChatsData.chats,
                 });
+                // console.log(userChatsData)
             };
         });
 

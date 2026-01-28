@@ -7,12 +7,15 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prune-branches": "git fetch --prune && powershell -Command \"$goneBranches = git branch -vv | Select-String ': gone]' | ForEach-Object { if ($_.Line -match '^\\\\s*(\\\\S+)') { $matches[1] } }; foreach ($branch in $goneBranches) { git branch -D $branch }\""
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@studio-freight/lenis": "^1.0.42",
+    "baseline-browser-mapping": "^2.9.19",
+    "caniuse-lite": "^1.0.30001766",
     "emoji-picker-react": "^4.12.0",
     "firebase": "^10.14.0",
     "framer-motion": "^11.1.5",
