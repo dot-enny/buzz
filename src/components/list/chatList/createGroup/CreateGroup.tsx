@@ -67,11 +67,6 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
   }
 
   const handleCreateGroup = async () => {
-    if (!groupName.trim()) {
-      toast.error('Please enter a group name')
-      return
-    }
-
     if (selectedUsers.length === 0) {
       toast.error('Please select at least one member')
       return
@@ -90,11 +85,21 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
       const chatId = `group_${Date.now()}_${currentUser.id}`
       const chatRef = doc(db, 'chats', chatId)
       
+      // Generate group name if not provided - list of first 3 members
+      let finalGroupName = groupName.trim();
+      if (!finalGroupName) {
+        const memberNames = allUsers
+          .filter(u => selectedUsers.includes(u.id))
+          .slice(0, 3)
+          .map(u => u.username);
+        finalGroupName = memberNames.join(', ') + (selectedUsers.length > 3 ? '...' : '');
+      }
+      
       await setDoc(chatRef, {
         createdAt: new Date(),
         createdBy: currentUser.id,
         type: 'group',
-        groupName: groupName.trim(),
+        groupName: finalGroupName,
         ...(groupPhotoURL && { groupPhotoURL }),
       })
 
@@ -109,7 +114,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
         const newChatEntry: UserChat = {
           chatId,
           type: 'group',
-          groupName: groupName.trim(),
+          groupName: finalGroupName,
           ...(groupPhotoURL && { groupPhotoURL }),
           participants,
           admins: [currentUser.id], // Creator is admin
@@ -277,7 +282,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
                 <div className="p-6 border-t border-neutral-800">
                   <button
                     onClick={handleCreateGroup}
-                    disabled={isCreating || !groupName.trim() || selectedUsers.length === 0}
+                    disabled={isCreating || selectedUsers.length === 0}
                     className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-800 disabled:text-neutral-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
                   >
                     {isCreating ? 'Creating...' : 'Create Group'}

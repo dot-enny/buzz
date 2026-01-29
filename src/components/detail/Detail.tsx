@@ -8,7 +8,7 @@ import { ArrowLeftStartOnRectangleIcon } from "@heroicons/react/24/outline"
 
 export const Detail = () => {
 
-  const { chatId, isGlobalChat, isReceiverBlocked } = useChatStore();
+  const { chatId, isGlobalChat, isGroupChat, isReceiverBlocked } = useChatStore();
   const { handleBlock } = useBlockUser();
 
   const { signOut } = useSignOut();
@@ -33,7 +33,7 @@ export const Detail = () => {
         {chatId && <Options />}
         <div className="absolute bottom-0 inset-x-0 frosted-glass py-5">
           <div className="flex">
-            {(chatId && !isGlobalChat) &&
+            {(chatId && !isGlobalChat && !isGroupChat) &&
               <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
                 {isReceiverBlocked ? 'Unblock User' : 'Block User'}
               </button>
@@ -51,7 +51,7 @@ export const Detail = () => {
 }
 
 const ChatDetails = () => {
-  const { isGlobalChat, user, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+  const { isGlobalChat, isGroupChat, user, groupData, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
   const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
   return (
@@ -62,6 +62,20 @@ const ChatDetails = () => {
             <img src="./img/avatar-placeholder.png" alt="user" className="w-24 h-24 rounded-full object-cover" />
             <h2>Global Buzz</h2>
             <p className="text-neutral-500">Buzz all the way!</p>
+          </>
+        ) : isGroupChat && groupData ? (
+          <>
+            {groupData.groupPhotoURL ? (
+              <img src={groupData.groupPhotoURL} alt={groupData.groupName} className="w-24 h-24 rounded-full object-cover" />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            )}
+            <h2>{groupData.groupName}</h2>
+            <p className="text-neutral-500">{groupData.participants?.length || 0} members</p>
           </>
         ) : (
           <>

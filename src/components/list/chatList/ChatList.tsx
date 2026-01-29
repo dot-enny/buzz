@@ -171,8 +171,13 @@ interface GlobalChatProps {
 const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
 
     const { isLoading, lastMessage } = useGlobalChatLastMessage();
+    const unreadCount = chat?.unreadCount || 0;
 
-    return (<div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800">
+    return (<div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
+        style={{
+            backgroundColor: chat?.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
+        }}
+    >
         {!isLoading ?
             <img
                 src="/img/avatar-placeholder.png"
@@ -180,7 +185,7 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
                 className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
             <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
         }
-        <div>
+        <div className="flex-1">
             {!isLoading ?
                 (<>
                     <h2>Global Buzz</h2>
@@ -193,6 +198,12 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
                 )
             }
         </div>
+        {/* Unread count badge */}
+        {unreadCount > 0 && (
+            <span className="flex items-center justify-center rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white min-w-[1.25rem]">
+                {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+        )}
     </div>
     )
 }

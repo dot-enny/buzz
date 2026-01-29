@@ -10,14 +10,25 @@ export const useChatList = () => {
     const [input, setInput] = useState('');
 
     const filteredChats = chats.filter((chat) => { 
-        if (chat.chatType !== 'global' && chat.user) {
+        // Exclude global chat from the list
+        if (chat.chatType === 'global') {
+            return false;
+        }
+        
+        // For group chats, search by group name
+        if (chat.type === 'group') {
+            return chat.groupName?.toLowerCase().includes(input.toLowerCase());
+        }
+        
+        // For 1-on-1 chats, search by username
+        if (chat.user) {
             return chat.user.username.toLowerCase().includes(input.toLowerCase());
         }
+        
         return false;
     });
-    // const filteredGroupChats = chats.filter((chat) => chat.user.username.toLowerCase().includes(input.toLowerCase()));
+    
     const globalChat = chats.filter((chat => chat.chatType === 'global'))[0];
-    // const displayChats = [...globalChat, ...filteredChats]
 
     // useEffect(() => {
     //     console.log('globalChat', globalChat)

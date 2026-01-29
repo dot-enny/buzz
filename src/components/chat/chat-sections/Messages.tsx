@@ -24,6 +24,7 @@ interface MessageProps {
 
 export const Messages = () => {
     const { messages, endRef } = useUpdateMessages();
+    const { isGlobalChat, isGroupChat } = useChatStore();
     const messagesToAnimate = 5; // Number of messages to animate
 
     // Group messages by date
@@ -33,25 +34,29 @@ export const Messages = () => {
         <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
             {messages ? (
                 <>
-                    {groupedMessages.map((group: { date: string; messages: any[] }) => (
-                        <div key={group.date} className="flex flex-col gap-5">
-                            {/* Date Separator */}
-                            <DateSeparator date={group.date} />
+                    {messages.length === 0 ? (
+                        <EmptyState isGlobalChat={isGlobalChat} isGroupChat={isGroupChat} />
+                    ) : (
+                        groupedMessages.map((group: { date: string; messages: any[] }) => (
+                            <div key={group.date} className="flex flex-col gap-5">
+                                {/* Date Separator */}
+                                <DateSeparator date={group.date} />
 
-                            {/* Messages for this date */}
-                            {group.messages.map((message: MessageProps) => {
-                                const globalIndex = messages.findIndex((m: any) => m.id === message.id);
-                                return (
-                                    <Message
-                                        key={message.id || message.createdAt.toDate().toISOString()}
-                                        message={message}
-                                        index={globalIndex}
-                                        animate={globalIndex >= messages.length - messagesToAnimate}
-                                    />
-                                );
-                            })}
-                        </div>
-                    ))}
+                                {/* Messages for this date */}
+                                {group.messages.map((message: MessageProps) => {
+                                    const globalIndex = messages.findIndex((m: any) => m.id === message.id);
+                                    return (
+                                        <Message
+                                            key={message.id || message.createdAt.toDate().toISOString()}
+                                            message={message}
+                                            index={globalIndex}
+                                            animate={globalIndex >= messages.length - messagesToAnimate}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        ))
+                    )}
                 </>
             ) : (
                 <div className="absolute inset-0 m-auto w-fit h-fit">
@@ -61,6 +66,35 @@ export const Messages = () => {
 
             <div ref={endRef} />
         </div>
+    );
+};
+
+const EmptyState = ({ isGlobalChat, isGroupChat }: { isGlobalChat: boolean; isGroupChat: boolean }) => {
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="absolute inset-0 m-auto w-fit h-fit flex flex-col items-center gap-4 px-6 text-center"
+        >
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600/20 to-purple-600/20 flex items-center justify-center">
+                <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+            </div>
+            <div className="flex flex-col gap-2">
+                <h3 className="text-lg font-semibold text-white">
+                    {isGlobalChat ? 'Start the Conversation' : isGroupChat ? 'No Messages Yet' : 'Say Hello!'}
+                </h3>
+                <p className="text-sm text-neutral-400 max-w-xs">
+                    {isGlobalChat 
+                        ? 'Be the first to send a message in the global chat' 
+                        : isGroupChat 
+                        ? 'Start chatting with your group members'
+                        : 'Send a message to start the conversation'}
+                </p>
+            </div>
+        </motion.div>
     );
 };
 
