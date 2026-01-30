@@ -42,8 +42,10 @@ export const useComposeMessage = () => {
 
         try {
             const imgUrl = await handleImageUpload();
+            const hasImage = img.file !== null;
+            const messageText = text.trim();
             await sendMessage(imgUrl);
-            await updateUserChats();
+            await updateUserChats(hasImage, messageText);
         } catch (err) {
             console.error("Error sending message:", err);
         }
@@ -81,7 +83,12 @@ export const useComposeMessage = () => {
         }
     };
 
-    const updateUserChats = async () => {
+    const updateUserChats = async (hasImage: boolean, messageText: string) => {
+        // Create last message preview
+        const lastMessageText = messageText
+            ? (hasImage ? `📷 ${messageText}` : messageText)
+            : (hasImage ? '📷 Photo' : '');
+        
         // For group chats, update all participants
         if (isGroupChat && groupData?.participants) {
             const participants = groupData.participants;
@@ -95,7 +102,7 @@ export const useComposeMessage = () => {
                     const chatIndex = userChatsData.chats.findIndex((chat: UserChat) => chat.chatId === chatId);
 
                     if (chatIndex !== -1) {
-                        userChatsData.chats[chatIndex].lastMessage = text;
+                        userChatsData.chats[chatIndex].lastMessage = lastMessageText;
                         userChatsData.chats[chatIndex].isSeen = userId === currentUser.id ? true : false;
                         
                         if (userId === currentUser.id) {
@@ -130,7 +137,7 @@ export const useComposeMessage = () => {
                 const userChatsData = userChatsSnapshot.data();
                 const chatIndex = userChatsData.chats.findIndex((chat: UserChatDocWithReceiverInfo) => chat.chatId === chatId);
 
-                userChatsData.chats[chatIndex].lastMessage = text;
+                userChatsData.chats[chatIndex].lastMessage = lastMessageText;
                 
                 // Mark as seen for sender, unseen for receiver
                 userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
