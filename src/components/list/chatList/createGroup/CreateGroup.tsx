@@ -17,6 +17,7 @@ interface CreateGroupProps {
 export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
   const { currentUser } = useUserStore()
   const [groupName, setGroupName] = useState('')
+  const [groupDescription, setGroupDescription] = useState('')
   const [groupPhoto, setGroupPhoto] = useState<{ file: File | null; url: string }>({
     file: null,
     url: '',
@@ -100,6 +101,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
         createdBy: currentUser.id,
         type: 'group',
         groupName: finalGroupName,
+        ...(groupDescription.trim() && { groupDescription: groupDescription.trim() }),
         ...(groupPhotoURL && { groupPhotoURL }),
       })
 
@@ -115,6 +117,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
           chatId,
           type: 'group',
           groupName: finalGroupName,
+          ...(groupDescription.trim() && { groupDescription: groupDescription.trim() }),
           ...(groupPhotoURL && { groupPhotoURL }),
           participants,
           admins: [currentUser.id], // Creator is admin
@@ -141,6 +144,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
       
       // Reset form
       setGroupName('')
+      setGroupDescription('')
       setGroupPhoto({ file: null, url: '' })
       setSelectedUsers([])
       setIsOpen(false)
@@ -222,10 +226,19 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
                   {/* Group Name */}
                   <input
                     type="text"
-                    placeholder="Group name"
+                    placeholder="Group name (optional)"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
-                    className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg outline-none focus:border-blue-500 transition-colors mb-3"
+                  />
+                  
+                  {/* Group Description */}
+                  <textarea
+                    placeholder="Group description (optional)"
+                    value={groupDescription}
+                    onChange={(e) => setGroupDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg outline-none focus:border-blue-500 transition-colors resize-none"
                   />
                 </div>
 

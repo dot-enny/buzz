@@ -16,6 +16,7 @@ interface UserChat {
     unreadCount?: number, // NEW: count of unread messages
     type: 'private' | 'group' | 'global',
     groupName?: string, // for group chats
+    groupDescription?: string, // for group chats
     groupPhotoURL?: string, // for group chats
     participants?: string[], // NEW: array of participant user IDs for group chats
     admins?: string[], // NEW: array of admin user IDs for group chats

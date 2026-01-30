@@ -108,6 +108,7 @@ export const useChatList = () => {
             if (chat.type === 'group') {
                 changeChat(chat.chatId, null, 'group', {
                     groupName: chat.groupName,
+                    groupDescription: chat.groupDescription,
                     groupPhotoURL: chat.groupPhotoURL,
                     participants: chat.participants,
                     admins: chat.admins,
