@@ -5,11 +5,13 @@ import { useChatStore } from "../../lib/chatStore"
 import { useBlockUser } from "../../hooks/chat-details/useBlockUser"
 import { useRemoveChat } from "../../hooks/chat-details/useRemoveChat"
 import { useSignOut } from "../../hooks/useSignOut"
-import { ArrowLeftStartOnRectangleIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { ArrowLeftStartOnRectangleIcon, TrashIcon, NoSymbolIcon } from "@heroicons/react/24/outline"
 import { Avatar, GroupAvatar } from "../ui/Avatar"
 import { useState } from "react"
 import EditGroupInfo from "./EditGroupInfo"
 import { useUserStore } from "../../lib/userStore"
+import { motion, AnimatePresence } from "framer-motion"
+import { bubblySpring } from "../ui/ConnectionStatus"
 
 export const Detail = () => {
 
@@ -41,67 +43,108 @@ export const Detail = () => {
       }
 
       {/* CHAT MENU */}
-      <div className="info p-5 flex-1 flex flex-col gap-7 overflow-y-auto">
+      <div className="info p-5 flex-1 flex flex-col gap-7 overflow-y-auto pb-32">
         {chatId && <Options />}
-        <div className="absolute bottom-0 inset-x-0 frosted-glass py-5">
-          <div className="flex flex-col gap-3">
-            {/* Remove Chat Button - for 1-on-1 and group chats, not global */}
-            {(chatId && !isGlobalChat) && (
-              <button 
-                onClick={() => setShowRemoveConfirm(true)} 
-                className="flex items-center gap-x-1.5 text-neutral-400 hover:text-red-400 w-fit mx-auto transition-colors"
-              >
-                <TrashIcon className="size-4" />
-                Remove Chat
-              </button>
-            )}
-            <div className="flex">
-              {(chatId && !isGlobalChat && !isGroupChat) &&
-                <button onClick={handleBlock} className="mt-1 text-red-500 w-fit mx-auto">
-                  {isReceiverBlocked ? 'Unblock User' : 'Block User'}
-                </button>
-              }
-              <button onClick={signOut} className="flex items-center gap-x-1 mt-1 text-red-500 w-fit mx-auto">
-                <ArrowLeftStartOnRectangleIcon className="text-red-500 size-5" />
-                Logout
-              </button>
-            </div>
-          </div>
+      </div>
+      
+      {/* FIXED BOTTOM ACTIONS */}
+      <div className="absolute bottom-0 inset-x-0 frosted-glass border-t border-neutral-800">
+        <div className="flex flex-col py-2">
+          {/* Remove Chat */}
+          {(chatId && !isGlobalChat) && (
+            <ActionButton 
+              onClick={() => setShowRemoveConfirm(true)}
+              icon={<TrashIcon className="size-5" />}
+              label="Remove Chat"
+              variant="muted"
+            />
+          )}
+          
+          {/* Block User - only for 1-on-1 chats */}
+          {(chatId && !isGlobalChat && !isGroupChat) && (
+            <ActionButton 
+              onClick={handleBlock}
+              icon={<NoSymbolIcon className="size-5" />}
+              label={isReceiverBlocked ? 'Unblock User' : 'Block User'}
+              variant="danger"
+            />
+          )}
+          
+          {/* Logout */}
+          <ActionButton 
+            onClick={signOut}
+            icon={<ArrowLeftStartOnRectangleIcon className="size-5" />}
+            label="Logout"
+            variant="danger"
+          />
         </div>
       </div>
       
       <EditGroupInfo isOpen={isEditGroupOpen} setIsOpen={setIsEditGroupOpen} />
       
       {/* Remove Chat Confirmation Modal */}
-      {showRemoveConfirm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-neutral-800 rounded-xl p-6 max-w-sm mx-4">
-            <h3 className="text-lg font-semibold mb-2">Remove Chat?</h3>
-            <p className="text-neutral-400 text-sm mb-6">
-              This will remove the chat from your list. You can add them back later and your message history will be preserved.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button 
-                onClick={() => setShowRemoveConfirm(false)}
-                className="px-4 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleRemoveChat}
-                disabled={isRemoving}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                {isRemoving ? 'Removing...' : 'Remove'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showRemoveConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+            onClick={() => setShowRemoveConfirm(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={bubblySpring}
+              className="bg-neutral-800 rounded-2xl p-6 max-w-sm mx-4 shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold mb-2">Remove Chat?</h3>
+              <p className="text-neutral-400 text-sm mb-6">
+                This will permanently remove the chat and all messages from your account. This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => setShowRemoveConfirm(false)}
+                  className="px-4 py-2.5 rounded-xl bg-neutral-700 hover:bg-neutral-600 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleRemoveChat}
+                  disabled={isRemoving}
+                  className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 transition-colors font-medium disabled:opacity-50"
+                >
+                  {isRemoving ? 'Removing...' : 'Remove'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
 
   )
 }
+
+// Unified action button component
+const ActionButton = ({ onClick, icon, label, variant }: { 
+  onClick: () => void, 
+  icon: React.ReactNode, 
+  label: string,
+  variant: 'muted' | 'danger'
+}) => (
+  <button 
+    onClick={onClick}
+    className={`flex items-center gap-3 px-5 py-3 w-full hover:bg-neutral-800/50 transition-colors ${
+      variant === 'danger' ? 'text-red-400 hover:text-red-300' : 'text-neutral-400 hover:text-neutral-300'
+    }`}
+  >
+    {icon}
+    <span className="text-sm font-medium">{label}</span>
+  </button>
+)
 
 const ChatDetails = ({ onEditGroup }: { onEditGroup: () => void }) => {
   const { isGlobalChat, isGroupChat, user, groupData, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();

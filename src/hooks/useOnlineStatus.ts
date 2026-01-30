@@ -2,19 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 
 export const useOnlineStatus = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [wasOffline, setWasOffline] = useState(false);
+    const [showStatus, setShowStatus] = useState(false);
+    const [wasEverOffline, setWasEverOffline] = useState(false);
 
     const handleOnline = useCallback(() => {
-        if (!isOnline) {
-            setWasOffline(true);
-            // Reset "wasOffline" after animation duration
-            setTimeout(() => setWasOffline(false), 3000);
-        }
         setIsOnline(true);
-    }, [isOnline]);
+        // Only show "back online" if we were previously offline
+        if (wasEverOffline) {
+            setShowStatus(true);
+            // Hide after 3 seconds
+            setTimeout(() => setShowStatus(false), 3000);
+        }
+    }, [wasEverOffline]);
 
     const handleOffline = useCallback(() => {
         setIsOnline(false);
+        setWasEverOffline(true);
+        setShowStatus(true); // Show offline status immediately
     }, []);
 
     useEffect(() => {
@@ -27,5 +31,5 @@ export const useOnlineStatus = () => {
         };
     }, [handleOnline, handleOffline]);
 
-    return { isOnline, wasOffline };
+    return { isOnline, showStatus };
 };

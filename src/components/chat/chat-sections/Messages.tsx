@@ -2,12 +2,14 @@ import { useChatStore } from "../../../lib/chatStore";
 import { useUserStore } from "../../../lib/userStore";
 import React, { useState, RefObject } from "react";
 import { Spinner } from "../../ui/Spinner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { classNames } from "../../../utils/helpers";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ClockIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { CheckIcon as CheckIconSolid } from "@heroicons/react/24/solid";
 import { groupMessagesByDate } from "../../../utils/dateHelpers";
 import { Avatar } from "../../ui/Avatar";
 import { ImageLightbox } from "../../ui/ImageLightbox";
+import { bubblySpring } from "../../ui/ConnectionStatus";
 
 // Format time as "2:34 PM"
 const formatTime = (date: Date): string => {
@@ -180,6 +182,7 @@ const MessageBody = ({ message, isCurrentUser }: { message: MessageProps, isCurr
     const isRead = message.readBy && message.readBy.length > 0;
     const isSending = message.status === 'sending';
     const isFailed = message.status === 'failed';
+    const isDelivered = message.status === 'delivered';
 
     return (
         <div className={classNames("texts flex-1 flex flex-col gap-1", isSending ? "opacity-70" : "")}>
@@ -192,40 +195,79 @@ const MessageBody = ({ message, isCurrentUser }: { message: MessageProps, isCurr
                 </>
             }
 
-            {/* MESSAGE TIME AND READ RECEIPT */}
+            {/* MESSAGE TIME AND STATUS */}
             <div className="flex items-center gap-1.5 px-1">
+                {/* Time or status text */}
                 <span className="text-[11px] text-neutral-400">
-                    {isSending ? 'Sending...' : isFailed ? 'Failed to send' : formatTime(message.createdAt.toDate())}
+                    {isFailed ? 'Failed' : formatTime(message.createdAt.toDate())}
                 </span>
 
-                {/* 
-                    Read receipt indicators (only show for sender's messages)
-                    Standard: ✓ (gray) = Sent, ✓✓ (gray) = Delivered, ✓✓ (blue filled) = Read
-                    Note: "Delivered" would require FCM/push notification tracking, 
-                    so for now we show: Sent -> Read
-                */}
-                {isCurrentUser && !isSending && !isFailed && (
-                    <div className="flex items-center">
-                        {isRead ? (
-                            // Double check FILLED for read (blue)
-                            <div className="relative flex items-center w-4 h-3">
-                                <svg className="w-3.5 h-3.5 text-blue-400 absolute left-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                </svg>
-                                <svg className="w-3.5 h-3.5 text-blue-400 absolute left-1.5" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                </svg>
-                            </div>
+                {/* Status indicators (only for sender's messages) */}
+                {isCurrentUser && (
+                    <AnimatePresence mode="wait">
+                        {isSending ? (
+                            // Pending: Clock icon
+                            <motion.div
+                                key="pending"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={bubblySpring}
+                            >
+                                <ClockIcon className="w-3.5 h-3.5 text-neutral-500" />
+                            </motion.div>
+                        ) : isFailed ? (
+                            // Failed: Red exclamation
+                            <motion.div
+                                key="failed"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={bubblySpring}
+                                className="flex items-center gap-1"
+                            >
+                                <ExclamationCircleIcon className="w-3.5 h-3.5 text-red-400" />
+                                <span className="text-[10px] text-red-400">Tap to retry</span>
+                            </motion.div>
+                        ) : isRead ? (
+                            // Read: Double check FILLED (blue)
+                            <motion.div
+                                key="read"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={bubblySpring}
+                                className="relative flex items-center w-4 h-3"
+                            >
+                                <CheckIconSolid className="w-3.5 h-3.5 text-blue-400 absolute left-0" />
+                                <CheckIconSolid className="w-3.5 h-3.5 text-blue-400 absolute left-1" />
+                            </motion.div>
+                        ) : isDelivered ? (
+                            // Delivered: Double check outline (gray)
+                            <motion.div
+                                key="delivered"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={bubblySpring}
+                                className="relative flex items-center w-4 h-3"
+                            >
+                                <CheckIcon className="w-3.5 h-3.5 text-neutral-400 absolute left-0" />
+                                <CheckIcon className="w-3.5 h-3.5 text-neutral-400 absolute left-1" />
+                            </motion.div>
                         ) : (
-                            // Single check (gray stroke) for sent
-                            <CheckIcon className="w-3.5 h-3.5 text-neutral-400" />
+                            // Sent: Single check (gray)
+                            <motion.div
+                                key="sent"
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0, opacity: 0 }}
+                                transition={bubblySpring}
+                            >
+                                <CheckIcon className="w-3.5 h-3.5 text-neutral-400" />
+                            </motion.div>
                         )}
-                    </div>
-                )}
-                
-                {/* Failed indicator */}
-                {isFailed && (
-                    <span className="text-[11px] text-red-400">• Tap to retry</span>
+                    </AnimatePresence>
                 )}
             </div>
         </div>

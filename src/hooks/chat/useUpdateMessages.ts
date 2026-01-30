@@ -3,19 +3,42 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useChatStore } from "../../lib/chatStore";
 import { db } from "../../lib/firebase";
 
+// Check if this is a temporary chat (not yet persisted)
+const isTempChat = (chatId: string | null): boolean => {
+    return chatId?.startsWith('temp_') ?? false;
+};
+
 export const useUpdateMessages = () => {
     const { chatId } = useChatStore();
-    const [messages, setMessages] = useState<any | null>(null);
+    const [messages, setMessages] = useState<any[] | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [pendingMessages, setPendingMessages] = useState<any[]>([]);
-    const isInitialRender = useRef(true); // Use a ref for initial render
+    const isInitialRender = useRef(true);
+    const prevChatId = useRef<string | null>(null);
 
     const endRef = useRef<HTMLDivElement | null>(null);
 
     // Combine real messages with pending (optimistic) messages
-    const allMessages = messages ? [...messages, ...pendingMessages.filter(pm => pm.status === 'sending' || pm.status === 'failed')] : pendingMessages;
+    const allMessages = messages 
+        ? [...messages, ...pendingMessages.filter(pm => pm.status === 'sending' || pm.status === 'failed')] 
+        : pendingMessages.length > 0 
+            ? pendingMessages 
+            : null;
 
+    // Reset state when chat changes
     useEffect(() => {
-        if (allMessages.length > 0 && endRef.current) { // Check if messages and ref exist
+        if (chatId !== prevChatId.current) {
+            setMessages(null);
+            setPendingMessages([]);
+            setIsLoading(true);
+            isInitialRender.current = true;
+            prevChatId.current = chatId;
+        }
+    }, [chatId]);
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        if (allMessages && allMessages.length > 0 && endRef.current) {
             if (isInitialRender.current) {
                 endRef.current.scrollIntoView();
                 isInitialRender.current = false;
@@ -25,31 +48,40 @@ export const useUpdateMessages = () => {
         }
     }, [allMessages]);
 
+    // Listen to messages from Firebase
     useEffect(() => {
-        if (chatId) {
-            const messagesCollectionRef = collection(db, "chats", chatId, "messages");
-            const q = query(messagesCollectionRef, orderBy("createdAt", "asc"));
-
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const fetchedMessages: any[] = [];
-                snapshot.forEach((doc) => {
-                    fetchedMessages.push({ id: doc.id, ...doc.data() as Omit<any, 'id'>, status: 'sent' });
-                });
-                setMessages(fetchedMessages);
-                
-                // Remove any pending messages that have been confirmed
-                setPendingMessages(prev => 
-                    prev.filter(pm => !fetchedMessages.some(fm => 
-                        fm.text === pm.text && 
-                        Math.abs(fm.createdAt?.toDate?.()?.getTime?.() - pm.createdAt?.toDate?.()?.getTime?.()) < 5000
-                    ))
-                );
-            }, (err) => {
-                console.error("Error fetching messages:", err);
-            });
-
-            return () => unsubscribe();
+        // For temporary chats, just show empty state immediately
+        if (!chatId || isTempChat(chatId)) {
+            setMessages([]);
+            setIsLoading(false);
+            return;
         }
+
+        setIsLoading(true);
+        const messagesCollectionRef = collection(db, "chats", chatId, "messages");
+        const q = query(messagesCollectionRef, orderBy("createdAt", "asc"));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedMessages: any[] = [];
+            snapshot.forEach((doc) => {
+                fetchedMessages.push({ id: doc.id, ...doc.data() as Omit<any, 'id'>, status: 'sent' });
+            });
+            setMessages(fetchedMessages);
+            setIsLoading(false);
+            
+            // Remove any pending messages that have been confirmed
+            setPendingMessages(prev => 
+                prev.filter(pm => !fetchedMessages.some(fm => 
+                    fm.text === pm.text && 
+                    Math.abs(fm.createdAt?.toDate?.()?.getTime?.() - pm.createdAt?.toDate?.()?.getTime?.()) < 5000
+                ))
+            );
+        }, (err) => {
+            console.error("Error fetching messages:", err);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [chatId]);
 
     // Add optimistic message
@@ -85,7 +117,8 @@ export const useUpdateMessages = () => {
     }, []);
 
     return { 
-        messages: allMessages, 
+        messages: isLoading ? null : (allMessages || []),
+        isLoading,
         endRef, 
         addOptimisticMessage, 
         markMessageFailed, 

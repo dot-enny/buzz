@@ -1,4 +1,4 @@
-import { updateDoc, doc, getDoc, collection, setDoc } from "firebase/firestore";
+import { updateDoc, doc, getDoc, collection, setDoc, serverTimestamp, arrayUnion } from "firebase/firestore";
 import { useState } from "react";
 import { useChatStore } from "../../lib/chatStore";
 import { db } from "../../lib/firebase";
@@ -17,9 +17,14 @@ export interface OptimisticCallbacks {
     markMessageSent?: (tempId: string) => void;
 }
 
+// Check if this is a temporary chat (not yet persisted)
+const isTempChat = (chatId: string | null): boolean => {
+    return chatId?.startsWith('temp_') ?? false;
+};
+
 export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
     const { currentUser } = useUserStore();
-    const { chatId, user, isGroupChat, groupData } = useChatStore();
+    const { chatId, user, isGroupChat, groupData, changeChat } = useChatStore();
 
     const [openEmoji, setOpenEmoji] = useState(false);
     const [text, setText] = useState('');
@@ -41,6 +46,44 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
                 url: URL.createObjectURL(file)
             });
         }
+    };
+
+    // Create a new chat and persist to both users' userchats
+    const createAndPersistChat = async (): Promise<string> => {
+        const chatRef = collection(db, "chats");
+        const userChatsRef = collection(db, "userchats");
+        const newChatRef = doc(chatRef);
+
+        // Create the chat document
+        await setDoc(newChatRef, {
+            createdAt: serverTimestamp(),
+        });
+
+        // Add to receiver's userchats
+        await updateDoc(doc(userChatsRef, user.id), {
+            chats: arrayUnion({
+                chatId: newChatRef.id,
+                lastMessage: "",
+                receiverId: currentUser.id,
+                isSeen: false,
+                unreadCount: 1,
+                updatedAt: Date.now()
+            })
+        });
+
+        // Add to sender's userchats
+        await updateDoc(doc(userChatsRef, currentUser.id), {
+            chats: arrayUnion({
+                chatId: newChatRef.id,
+                lastMessage: "",
+                receiverId: user.id,
+                isSeen: true,
+                unreadCount: 0,
+                updatedAt: Date.now()
+            })
+        });
+
+        return newChatRef.id;
     };
 
     const handleSendText = async () => {
@@ -71,6 +114,15 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
         resetInput();
 
         try {
+            let actualChatId = chatId;
+            
+            // If this is a temporary chat, create the real chat first
+            if (chatId && isTempChat(chatId)) {
+                actualChatId = await createAndPersistChat();
+                // Update the chat store with the real chat ID
+                changeChat(actualChatId, user);
+            }
+
             // Upload image if present
             let imgUrl: string | null = null;
             if (imgFile) {
@@ -78,8 +130,8 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
             }
             
             // Send to Firebase
-            await sendMessage(messageText, imgUrl);
-            await updateUserChats(hasImage, messageText);
+            await sendMessage(messageText, imgUrl, actualChatId);
+            await updateUserChats(hasImage, messageText, actualChatId);
             
             // Mark as sent
             if (tempId && callbacks?.markMessageSent) {
@@ -94,9 +146,10 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
         }
     };
 
-    const sendMessage = async (textMessage: string, imgUrl: string | null) => {
-        if (chatId) {
-            const messagesCollectionRef = collection(db, "chats", chatId, "messages");
+    const sendMessage = async (textMessage: string, imgUrl: string | null, actualChatId?: string | null) => {
+        const targetChatId = actualChatId || chatId;
+        if (targetChatId && !isTempChat(targetChatId)) {
+            const messagesCollectionRef = collection(db, "chats", targetChatId, "messages");
 
             const baseMessage = {
                 senderId: currentUser.id,
@@ -116,7 +169,10 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
         }
     };
 
-    const updateUserChats = async (hasImage: boolean, messageText: string) => {
+    const updateUserChats = async (hasImage: boolean, messageText: string, actualChatId?: string | null) => {
+        const targetChatId = actualChatId || chatId;
+        if (!targetChatId || isTempChat(targetChatId)) return;
+        
         // Create last message preview
         const lastMessageText = messageText
             ? (hasImage ? `📷 ${messageText}` : messageText)
@@ -132,7 +188,7 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
 
                 if (userChatsSnapshot.exists()) {
                     const userChatsData = userChatsSnapshot.data();
-                    const chatIndex = userChatsData.chats.findIndex((chat: UserChat) => chat.chatId === chatId);
+                    const chatIndex = userChatsData.chats.findIndex((chat: UserChat) => chat.chatId === targetChatId);
 
                     if (chatIndex !== -1) {
                         userChatsData.chats[chatIndex].lastMessage = lastMessageText;
@@ -168,26 +224,28 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
 
             if (userChatsSnapshot.exists()) {
                 const userChatsData = userChatsSnapshot.data();
-                const chatIndex = userChatsData.chats.findIndex((chat: UserChatDocWithReceiverInfo) => chat.chatId === chatId);
+                const chatIndex = userChatsData.chats.findIndex((chat: UserChatDocWithReceiverInfo) => chat.chatId === targetChatId);
 
-                userChatsData.chats[chatIndex].lastMessage = lastMessageText;
-                
-                // Mark as seen for sender, unseen for receiver
-                userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
-                
-                // Increment unread count for receiver, reset for sender
-                if (id === currentUser.id) {
-                    userChatsData.chats[chatIndex].unreadCount = 0;
-                } else {
-                    userChatsData.chats[chatIndex].unreadCount = 
-                        (userChatsData.chats[chatIndex].unreadCount || 0) + 1;
+                if (chatIndex !== -1) {
+                    userChatsData.chats[chatIndex].lastMessage = lastMessageText;
+                    
+                    // Mark as seen for sender, unseen for receiver
+                    userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+                    
+                    // Increment unread count for receiver, reset for sender
+                    if (id === currentUser.id) {
+                        userChatsData.chats[chatIndex].unreadCount = 0;
+                    } else {
+                        userChatsData.chats[chatIndex].unreadCount = 
+                            (userChatsData.chats[chatIndex].unreadCount || 0) + 1;
+                    }
+                    
+                    userChatsData.chats[chatIndex].updatedAt = Date.now();
+
+                    await updateDoc(userChatsRef, {
+                        chats: userChatsData.chats,
+                    });
                 }
-                
-                userChatsData.chats[chatIndex].updatedAt = Date.now();
-
-                await updateDoc(userChatsRef, {
-                    chats: userChatsData.chats,
-                });
             };
         });
     };

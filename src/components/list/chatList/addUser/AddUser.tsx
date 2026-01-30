@@ -1,16 +1,33 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { ArrowPathIcon, ChatBubbleLeftIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useAddUser } from '../../../../hooks/useAddUser'
+import { MagnifyingGlassIcon, XMarkIcon, UserPlusIcon, ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline'
+import { useAddUser, UserWithChatInfo } from '../../../../hooks/useAddUser'
 import Tooltip from '../../../ui/Tooltip'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Spinner } from '../../../ui/Spinner'
+import { Avatar } from '../../../ui/Avatar'
+import { motion, AnimatePresence } from 'framer-motion'
+import { bubblySpring } from '../../../ui/ConnectionStatus'
 
 export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (val: boolean) => void }) {
-
-  const { fetchUsers, addUser, openExistingChat, addingUserId, filteredUsers, setFilterInput } = useAddUser(() => setIsOpen(false))
+  const [searchQuery, setSearchQuery] = useState('');
+  const { fetchUsers, openChat, isLoading, filteredUsers, setFilterInput, totalUnadded } = useAddUser(() => setIsOpen(false));
 
   useEffect(() => {
-    if (isOpen) fetchUsers();
-  }, [isOpen])
+    if (isOpen) {
+      fetchUsers();
+      setSearchQuery('');
+      setFilterInput('');
+    }
+  }, [isOpen]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setFilterInput(query);
+  };
+
+  // Determine if we're showing unadded users or search results
+  const isShowingUnadded = !searchQuery.trim();
+  const hasResults = filteredUsers.length > 0;
 
   return (
     <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-10">
@@ -26,10 +43,37 @@ export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
               transition
               className="pointer-events-auto w-screen max-w-md transform transition duration-500 ease-in-out data-[closed]:translate-x-full sm:duration-700"
             >
-              <div className="flex h-full flex-col overflow-y-scroll bg-neutral-900 shadow-xl">
+              <div className="flex h-full flex-col bg-neutral-900 shadow-xl">
                 <DrawerHeader setIsOpen={setIsOpen} />
-                <SearchBar setFilterInput={setFilterInput} isLoading={false} />
-                <UserList users={filteredUsers} addUser={addUser} openExistingChat={openExistingChat} addingUserId={addingUserId} />
+                <SearchBar value={searchQuery} onChange={handleSearch} />
+                
+                <div className="flex-1 overflow-y-auto">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Spinner />
+                    </div>
+                  ) : !hasResults && isShowingUnadded ? (
+                    <AllCaughtUpState />
+                  ) : !hasResults && !isShowingUnadded ? (
+                    <NoResultsState query={searchQuery} />
+                  ) : (
+                    <>
+                      {isShowingUnadded && totalUnadded > 0 && (
+                        <SectionHeader 
+                          title="Discover people" 
+                          subtitle={`${totalUnadded} user${totalUnadded !== 1 ? 's' : ''} you haven't messaged`}
+                        />
+                      )}
+                      {!isShowingUnadded && hasResults && (
+                        <SectionHeader 
+                          title="Search results" 
+                          subtitle={`${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''} found`}
+                        />
+                      )}
+                      <UserList users={filteredUsers} openChat={openChat} />
+                    </>
+                  )}
+                </div>
               </div>
             </DialogPanel>
           </div>
@@ -40,18 +84,20 @@ export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
 }
 
 const DrawerHeader = ({ setIsOpen }: { setIsOpen: (val: boolean) => void }) => (
-  <div className="p-6">
+  <div className="p-6 pb-4">
     <div className="flex items-start justify-between">
-      <DialogTitle className="text-base font-semibold">Add other users on buzz as friends</DialogTitle>
+      <div>
+        <DialogTitle className="text-lg font-semibold">New Message</DialogTitle>
+        <p className="text-sm text-neutral-400 mt-1">Find someone to start a conversation</p>
+      </div>
       <div className="ml-3 flex h-7 items-center">
-        <Tooltip tip="Close panel" className="-left-10">
+        <Tooltip tip="Close" className="-left-6">
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="relative rounded-md hover:text-gray-500 focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="relative rounded-md text-neutral-400 hover:text-white transition-colors"
           >
             <span className="absolute -inset-2.5" />
-            <span className="sr-only">Close panel</span>
             <XMarkIcon aria-hidden="true" className="size-6" />
           </button>
         </Tooltip>
@@ -60,84 +106,119 @@ const DrawerHeader = ({ setIsOpen }: { setIsOpen: (val: boolean) => void }) => (
   </div>
 )
 
-const UserList = ({ users, addUser, openExistingChat, addingUserId }: { 
-  users: (User & { isAdded: boolean; chatId?: string })[], 
-  addUser: (val: User) => void, 
-  openExistingChat: (val: User & { chatId?: string }) => void,
-  addingUserId: string | null 
-}) => (
-  <ul role="list" className="flex-1 divide-y divide-gray-200 overflow-y-auto">
-    {users.map((user) => (
-      <UserListItem 
-        key={user.id} 
-        user={user} 
-        addUser={addUser} 
-        openExistingChat={openExistingChat}
-        isAddingUserId={addingUserId == user.id} 
+const SearchBar = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => (
+  <div className="px-6 pb-4">
+    <div className="flex items-center gap-3 bg-neutral-800 rounded-xl px-4 py-3">
+      <MagnifyingGlassIcon className="text-neutral-400 size-5 shrink-0" />
+      <input 
+        type="text" 
+        placeholder="Search by username..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-neutral-500"
+        autoFocus
       />
-    ))}
-  </ul>
-)
-
-const UserListItem = ({ user, addUser, openExistingChat, isAddingUserId }: { 
-  user: User & { isAdded: boolean; chatId?: string }, 
-  addUser: (val: User) => void, 
-  openExistingChat: (val: User & { chatId?: string }) => void,
-  isAddingUserId: boolean 
-}) => (
-  <li>
-    <div className="group relative flex items-center px-5 py-6 hover:bg-gray-800/30">
-      <div className="-m-1 block flex-1 p-1">
-        {/* <div aria-hidden="true" className="absolute inset-0 group-hover:bg-gray-800" /> */}
-        <div className="relative flex min-w-0 flex-1 items-center">
-          <UserListItemImage user={user} />
-          <UserListItemDetails user={user} />
-        </div>
-      </div>
-      {/* <DrawerTeamListItemMenu /> */}
-      <button onClick={() => user.isAdded ? openExistingChat(user) : addUser(user)}>
-        { user.isAdded ? 
-          <Tooltip tip="Open chat" className="-left-8">
-            <ChatBubbleLeftIcon className="text-white size-6 hover:text-blue-400 transition-colors" />
-          </Tooltip>
-          : isAddingUserId ? <ArrowPathIcon className="text-white size-7 animate-spin" /> :
-          <Tooltip tip="Add user" className="-left-5">
-            <PlusIcon className="text-white size-6" />
-          </Tooltip>
-        }
-      </button>
     </div>
-  </li>
-)
-
-const UserListItemImage = ({ user }: { user: User }) => (
-  <span className="relative inline-block shrink-0">
-    <img alt="" src={user.avatar || './img/avatar-placeholder.png'} className="size-10 rounded-full object-cover" />
-    {/* <span
-      aria-hidden="true"
-      className={classNames(
-        Math.random() > 0.5 ? 'bg-green-400' : 'bg-gray-300',
-        'absolute right-0 top-0 block size-2.5 rounded-full ring-2 ring-white',
-      )}
-    /> */}
-  </span>
-)
-
-const UserListItemDetails = ({ user }: { user: User }) => (
-  <div className="ml-4 truncate">
-    <p className="truncate text-sm font-medium text-gray-100">{user.username}</p>
-    <p className="truncate text-sm text-gray-500">{user.status}</p>
   </div>
 )
 
-const SearchBar = ({ setFilterInput }: { setFilterInput: (val: string) => void, isLoading: boolean }) => {
-  return (
-    <div className="bg-neutral-900 flex items-center gap-5 px-6 py-2 rounded-lg">
-      <MagnifyingGlassIcon className="text-white size-5" />
-      <input type="text" placeholder="Search"
-        onChange={(e) => setFilterInput(e.target.value)}
-        className="bg-transparent border-none outline-none text-white"
-      />
+const SectionHeader = ({ title, subtitle }: { title: string, subtitle: string }) => (
+  <div className="px-6 py-2 border-b border-neutral-800">
+    <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider">{title}</p>
+    <p className="text-xs text-neutral-600 mt-0.5">{subtitle}</p>
+  </div>
+)
+
+const AllCaughtUpState = () => (
+  <motion.div 
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="flex flex-col items-center justify-center py-16 px-6 text-center"
+  >
+    <div className="w-16 h-16 rounded-full bg-green-600/10 flex items-center justify-center mb-4">
+      <ChatBubbleLeftEllipsisIcon className="w-8 h-8 text-green-400" />
     </div>
-  )
-}
+    <p className="text-neutral-300 font-medium">You've messaged everyone!</p>
+    <p className="text-neutral-500 text-sm mt-1">Search for specific users above</p>
+  </motion.div>
+)
+
+const NoResultsState = ({ query }: { query: string }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="flex flex-col items-center justify-center py-16 px-6 text-center"
+  >
+    <p className="text-neutral-400">No users found matching "{query}"</p>
+  </motion.div>
+)
+
+const UserList = ({ users, openChat }: { 
+  users: UserWithChatInfo[], 
+  openChat: (user: UserWithChatInfo) => void
+}) => (
+  <ul role="list" className="divide-y divide-neutral-800">
+    <AnimatePresence>
+      {users.map((user, index) => (
+        <UserListItem 
+          key={user.id} 
+          user={user} 
+          openChat={openChat}
+          index={index}
+        />
+      ))}
+    </AnimatePresence>
+  </ul>
+)
+
+const UserListItem = ({ user, openChat, index }: { 
+  user: UserWithChatInfo, 
+  openChat: (user: UserWithChatInfo) => void,
+  index: number
+}) => (
+  <motion.li
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ ...bubblySpring, delay: index * 0.05 }}
+  >
+    <button 
+      onClick={() => openChat(user)}
+      className="w-full group relative flex items-center px-6 py-4 hover:bg-neutral-800/50 transition-colors"
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-4">
+        <div className="relative">
+          <Avatar src={user.avatar} name={user.username} size="md" />
+          {user.isAdded && (
+            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-neutral-900 flex items-center justify-center">
+              <ChatBubbleLeftEllipsisIcon className="w-3 h-3 text-blue-400" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm font-medium text-white">{user.username}</p>
+            {user.isAdded && (
+              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-400 font-medium">
+                Active
+              </span>
+            )}
+          </div>
+          <p className="truncate text-sm text-neutral-500">{user.status || 'Hey there! I\'m using Buzz'}</p>
+        </div>
+      </div>
+      <Tooltip tip={user.isAdded ? "Continue chat" : "Start chat"} className="-left-10">
+        <div className={`p-2 rounded-full transition-colors ${
+          user.isAdded 
+            ? 'bg-blue-600/20 group-hover:bg-blue-600/30' 
+            : 'bg-neutral-700/50 group-hover:bg-neutral-700'
+        }`}>
+          {user.isAdded ? (
+            <ChatBubbleLeftEllipsisIcon className="size-5 text-blue-400" />
+          ) : (
+            <UserPlusIcon className="size-5 text-neutral-300" />
+          )}
+        </div>
+      </Tooltip>
+    </button>
+  </motion.li>
+)

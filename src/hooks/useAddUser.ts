@@ -1,150 +1,113 @@
-import { collection, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, getDocs, query, where, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, getDoc, doc } from "firebase/firestore";
 import { useState } from "react";
 import { db } from "../lib/firebase";
 import { useUserStore } from "../lib/userStore";
 import { useChatStore } from "../lib/chatStore";
 
-export const useAddUser = (onUserAdded?: () => void) => {
+export interface UserWithChatInfo extends User {
+    chatId?: string;
+    isAdded: boolean;
+}
 
+const INITIAL_USERS_LIMIT = 20;
+
+export const useAddUser = (onChatOpened?: () => void) => {
     const { currentUser } = useUserStore();
     const { changeChat } = useChatStore();
 
-    const [users, setUsers] = useState<(User & { isAdded: boolean; chatId?: string })[]>([]);
+    const [allUsers, setAllUsers] = useState<UserWithChatInfo[]>([]);
     const [filterInput, setFilterInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [addingUserId, setAddingUserId] = useState<string | null>(null);
-    const filteredUsers = users.filter((user) => user.username.toLowerCase().includes(filterInput.toLowerCase()));
-
-    // const searchUser = async (username: string) => {
-    //     try {
-    //         const userRef = collection(db, "users");
-    //         const userQuery = query(
-    //             userRef,
-    //             where("username", ">=", username),
-    //             where("username", "<=", username + '\uf8ff'),
-    //             where("username", "!=", currentUser.username)
-    //         );
-
-    //         const querySnapshot = await getDocs(userQuery);
-
-    //         if (!querySnapshot.empty) {
-    //             const allUsers = await Promise.all(querySnapshot.docs.map(async (doc) => {
-    //                 const user = doc.data();
-    //                 const isAdded = await checkIfUserIsAlreadyAdded(user.id);
-    //                 return { ...user, isAdded };
-    //             }));
-    //             setUsers(allUsers);
-    //         } else {
-    //             setUsers([]);
-    //         }
-    //     } catch (err) {
-    //         console.log(err);
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
-
-    // const searchUser = async (username: string) => {
+    
+    // Filter users based on search input
+    const getFilteredUsers = (): UserWithChatInfo[] => {
+        if (!filterInput.trim()) {
+            // No search: show unadded users only (limited)
+            return allUsers
+                .filter(user => !user.isAdded)
+                .slice(0, INITIAL_USERS_LIMIT);
+        }
         
-    // }
+        // With search: show ALL matching users (added and unadded)
+        return allUsers.filter(user => 
+            user.username.toLowerCase().includes(filterInput.toLowerCase())
+        );
+    };
 
+    const filteredUsers = getFilteredUsers();
+
+    // Fetch all users (except current user)
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
             const userRef = collection(db, "users");
             const userQuery = query(userRef, where("username", "!=", currentUser.username));
-
             const querySnapshot = await getDocs(userQuery);
 
             if (!querySnapshot.empty) {
-                const allUsers = await Promise.all(querySnapshot.docs.map(async (doc) => {
-                    const user = doc.data() as User;
-                    const existingChat = await getExistingChatWithUser(user.id);
+                const users = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
+                    const user = docSnap.data() as User;
+                    const existingChatId = await getExistingChatId(user.id);
                     return { 
                         ...user, 
-                        isAdded: !!existingChat,
-                        chatId: existingChat?.chatId 
+                        chatId: existingChatId,
+                        isAdded: !!existingChatId
                     };
                 }));
-                setUsers(allUsers);
+                
+                // Sort: unadded users first, then added users
+                users.sort((a, b) => {
+                    if (a.isAdded === b.isAdded) return 0;
+                    return a.isAdded ? 1 : -1;
+                });
+                
+                setAllUsers(users);
             } else {
-                setUsers([]);
+                setAllUsers([]);
             }
         } catch (err) {
-            console.log(err);
+            console.error("Error fetching users:", err);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const getExistingChatWithUser = async (userId: string): Promise<{ chatId: string } | null> => {
-        const userChatsRef = doc(db, "userchats", currentUser.id);
-        const userChatsDoc = await getDoc(userChatsRef);
-        if (userChatsDoc.exists()) {
-            const userChats = userChatsDoc.data().chats;
-            const existingChat = userChats.find((chat: UserChat) => chat.receiverId === userId);
-            return existingChat ? { chatId: existingChat.chatId } : null;
-        }
-        return null;
-    };
-
-    const addUser = async (user: User) => {
-        setAddingUserId(user.id);
-        const chatRef = collection(db, "chats");
-        const userChatsRef = collection(db, "userchats");
-
+    // Check if there's an existing chat with this user
+    const getExistingChatId = async (userId: string): Promise<string | undefined> => {
         try {
-            const newChatRef = doc(chatRef);
-
-            await setDoc(newChatRef, {
-                createdAt: serverTimestamp(),
-                messages: [],
-            });
-
-            await updateDoc(doc(userChatsRef, user.id), {
-                chats: arrayUnion({
-                    chatId: newChatRef.id,
-                    lastMessage: "",
-                    receiverId: currentUser.id,
-                    isSeen: true,
-                    unreadCount: 0,
-                    updatedAt: Date.now()
-                })
-            });
-
-            await updateDoc(doc(userChatsRef, currentUser.id), {
-                chats: arrayUnion({
-                    chatId: newChatRef.id,
-                    lastMessage: "",
-                    receiverId: user.id,
-                    isSeen: true,
-                    unreadCount: 0,
-                    updatedAt: Date.now()
-                })
-            });
-
-            // Open the chat immediately after adding
-            changeChat(newChatRef.id, user);
-            
-            // Callback to close modal
-            onUserAdded?.();
-
-            fetchUsers();
-
+            const userChatsRef = doc(db, "userchats", currentUser.id);
+            const userChatsDoc = await getDoc(userChatsRef);
+            if (userChatsDoc.exists()) {
+                const userChats = userChatsDoc.data().chats || [];
+                const existingChat = userChats.find((chat: UserChat) => chat.receiverId === userId);
+                return existingChat?.chatId;
+            }
         } catch (err) {
-            console.log(err);
-        } finally {
-            setAddingUserId(null);
+            console.error("Error checking existing chat:", err);
         }
+        return undefined;
     };
 
-    // Open an existing chat with a user
-    const openExistingChat = (user: User & { chatId?: string }) => {
+    // Open a chat with a user
+    const openChat = (user: UserWithChatInfo) => {
         if (user.chatId) {
+            // Open existing chat
             changeChat(user.chatId, user);
-            onUserAdded?.();
+        } else {
+            // Open a temporary chat
+            const tempChatId = `temp_${user.id}`;
+            changeChat(tempChatId, user);
         }
+        onChatOpened?.();
     };
 
-    return { isLoading, addingUserId, addUser, openExistingChat, fetchUsers, setFilterInput, filteredUsers };
-}
+    return { 
+        fetchUsers, 
+        openChat, 
+        isLoading, 
+        filteredUsers, 
+        setFilterInput,
+        filterInput,
+        totalUnadded: allUsers.filter(u => !u.isAdded).length
+    };
+};
