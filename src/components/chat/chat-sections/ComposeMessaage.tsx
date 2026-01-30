@@ -1,6 +1,6 @@
 import EmojiPicker from "emoji-picker-react";
 import { useChatStore } from "../../../lib/chatStore";
-import { useComposeMessage } from "../../../hooks/chat/useComposeMessage";
+import { useComposeMessage, OptimisticCallbacks } from "../../../hooks/chat/useComposeMessage";
 import { FaceSmileIcon, PaperAirplaneIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { AutoExpandingTextarea } from "../../ui/AutoExpandingTextarea";
 import { useRef } from "react";
@@ -22,9 +22,13 @@ interface SendButtonProps {
     isBlocked: boolean;
 }
 
-export const ComposeMessage = () => {
+interface ComposeMessageProps {
+    optimisticCallbacks?: OptimisticCallbacks;
+}
+
+export const ComposeMessage = ({ optimisticCallbacks }: ComposeMessageProps) => {
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
-    const { handleImgSelect, img, setImg, handleEmoji, handleSendText, text, setText, openEmoji, setOpenEmoji } = useComposeMessage();
+    const { handleImgSelect, img, setImg, handleEmoji, handleSendText, text, setText, openEmoji, setOpenEmoji } = useComposeMessage(optimisticCallbacks);
     const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
     return (

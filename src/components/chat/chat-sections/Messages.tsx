@@ -1,14 +1,22 @@
 import { useChatStore } from "../../../lib/chatStore";
-import { format } from "timeago.js";
 import { useUserStore } from "../../../lib/userStore";
-import { useUpdateMessages } from "../../../hooks/chat/useUpdateMessages";
-import React from "react";
+import React, { useState, RefObject } from "react";
 import { Spinner } from "../../ui/Spinner";
 import { motion } from "framer-motion";
 import { classNames } from "../../../utils/helpers";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { groupMessagesByDate } from "../../../utils/dateHelpers";
 import { Avatar } from "../../ui/Avatar";
+import { ImageLightbox } from "../../ui/ImageLightbox";
+
+// Format time as "2:34 PM"
+const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+    });
+};
 
 interface MessageProps {
     id: string;
@@ -21,10 +29,15 @@ interface MessageProps {
         toDate: () => Date;
     };
     readBy?: string[];
+    status?: 'sending' | 'sent' | 'failed' | 'delivered';
 }
 
-export const Messages = () => {
-    const { messages, endRef } = useUpdateMessages();
+interface MessagesComponentProps {
+    messages: MessageProps[] | null;
+    endRef: RefObject<HTMLDivElement>;
+}
+
+export const Messages = ({ messages, endRef }: MessagesComponentProps) => {
     const { isGlobalChat, isGroupChat } = useChatStore();
     const messagesToAnimate = 5; // Number of messages to animate
 
@@ -32,7 +45,7 @@ export const Messages = () => {
     const groupedMessages = messages ? groupMessagesByDate(messages) : [];
 
     return (
-        <div className="center flex-1 p-5 overflow-scroll flex flex-col gap-5">
+        <div className="center flex-1 p-5 pt-0 overflow-scroll flex flex-col gap-5 relative">
             {messages ? (
                 <>
                     {messages.length === 0 ? (
@@ -40,8 +53,8 @@ export const Messages = () => {
                     ) : (
                         groupedMessages.map((group: { date: string; messages: any[] }) => (
                             <div key={group.date} className="flex flex-col gap-5">
-                                {/* Date Separator */}
-                                <DateSeparator date={group.date} />
+                                {/* Sticky Date Separator */}
+                                <StickyDateSeparator date={group.date} />
 
                                 {/* Messages for this date */}
                                 {group.messages.map((message: MessageProps) => {
@@ -99,18 +112,18 @@ const EmptyState = ({ isGlobalChat, isGroupChat }: { isGlobalChat: boolean; isGr
     );
 };
 
-const DateSeparator = ({ date }: { date: string }) => {
+const StickyDateSeparator = ({ date }: { date: string }) => {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center justify-center my-2"
-        >
-            <div className="px-3 py-1 bg-neutral-800/80 backdrop-blur-sm rounded-full text-xs text-neutral-400 font-medium">
+        <div className="sticky top-0 z-10 flex items-center justify-center py-3 -mx-5 bg-gradient-to-b from-neutral-950 via-neutral-950/95 to-transparent">
+            <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="px-3 py-1 bg-neutral-800/90 backdrop-blur-sm rounded-full text-xs text-neutral-400 font-medium shadow-lg"
+            >
                 {date}
-            </div>
-        </motion.div>
+            </motion.div>
+        </div>
     );
 };
 
@@ -161,40 +174,58 @@ const MessageAvatar = ({ message }: { message: any }) => {
     );
 }
 
-const MessageBody = ({ message, isCurrentUser }: { message: any, isCurrentUser: boolean }) => {
+const MessageBody = ({ message, isCurrentUser }: { message: MessageProps, isCurrentUser: boolean }) => {
 
     // Check if message has been read
     const isRead = message.readBy && message.readBy.length > 0;
+    const isSending = message.status === 'sending';
+    const isFailed = message.status === 'failed';
 
     return (
-        <div className="texts flex-1 flex flex-col gap-1">
+        <div className={classNames("texts flex-1 flex flex-col gap-1", isSending ? "opacity-70" : "")}>
             {/* Show sender name for group/global chats */}
 
             {(message.img && message.text) ? <ImgWithCaption imgSrc={message.img} text={message.text} isCurrentUser={isCurrentUser} /> :
                 <>
                     {message.img && <ImgWithoutCaption imgSrc={message.img} />}
-                    {message.text && <MessageParagraph text={message.text} username={!isCurrentUser && message.senderUsername} isCurrentUser={isCurrentUser} />}
+                    {message.text && <MessageParagraph text={message.text} username={!isCurrentUser ? message.senderUsername : undefined} isCurrentUser={isCurrentUser} />}
                 </>
             }
 
             {/* MESSAGE TIME AND READ RECEIPT */}
             <div className="flex items-center gap-1.5 px-1">
-                <span className="text-[11px] text-neutral-400">{format(message.createdAt.toDate())}</span>
+                <span className="text-[11px] text-neutral-400">
+                    {isSending ? 'Sending...' : isFailed ? 'Failed to send' : formatTime(message.createdAt.toDate())}
+                </span>
 
-                {/* Read receipt indicators (only show for sender's messages) */}
-                {isCurrentUser && (
+                {/* 
+                    Read receipt indicators (only show for sender's messages)
+                    Standard: ✓ (gray) = Sent, ✓✓ (gray) = Delivered, ✓✓ (blue filled) = Read
+                    Note: "Delivered" would require FCM/push notification tracking, 
+                    so for now we show: Sent -> Read
+                */}
+                {isCurrentUser && !isSending && !isFailed && (
                     <div className="flex items-center">
                         {isRead ? (
-                            // Double check for read (overlapping)
-                            <div className="relative flex items-center w-3.5 h-3">
-                                <CheckIcon className="w-3 h-3 text-blue-400 absolute left-0" />
-                                <CheckIcon className="w-3 h-3 text-blue-400 absolute left-1" />
+                            // Double check FILLED for read (blue)
+                            <div className="relative flex items-center w-4 h-3">
+                                <svg className="w-3.5 h-3.5 text-blue-400 absolute left-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                </svg>
+                                <svg className="w-3.5 h-3.5 text-blue-400 absolute left-1.5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                </svg>
                             </div>
                         ) : (
-                            // Single check for sent
-                            <CheckIcon className="w-3 h-3 text-neutral-400" />
+                            // Single check (gray stroke) for sent
+                            <CheckIcon className="w-3.5 h-3.5 text-neutral-400" />
                         )}
                     </div>
+                )}
+                
+                {/* Failed indicator */}
+                {isFailed && (
+                    <span className="text-[11px] text-red-400">• Tap to retry</span>
                 )}
             </div>
         </div>
@@ -203,24 +234,56 @@ const MessageBody = ({ message, isCurrentUser }: { message: any, isCurrentUser: 
 
 
 const ImgWithCaption = ({ imgSrc, text, isCurrentUser }: { imgSrc: string, text: string, isCurrentUser: boolean }) => {
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    
     return (
-        <div className={classNames(
-            'rounded-2xl overflow-hidden shadow-lg',
-            isCurrentUser
-                ? 'bg-gradient-to-br from-blue-600 to-blue-700'
-                : 'bg-neutral-800/90 backdrop-blur-sm'
-        )}>
-            <ImgWithoutCaption imgSrc={imgSrc} />
-            <div className="px-4 py-2.5">
-                <span className="text-white text-[15px] leading-relaxed break-words">{text}</span>
+        <>
+            <div className={classNames(
+                'rounded-2xl overflow-hidden shadow-lg',
+                isCurrentUser
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-700'
+                    : 'bg-neutral-800/90 backdrop-blur-sm'
+            )}>
+                <ClickableImage imgSrc={imgSrc} onClick={() => setIsLightboxOpen(true)} />
+                <div className="px-4 py-2.5">
+                    <span className="text-white text-[15px] leading-relaxed break-words">{text}</span>
+                </div>
             </div>
-        </div>
+            <ImageLightbox 
+                isOpen={isLightboxOpen} 
+                onClose={() => setIsLightboxOpen(false)} 
+                src={imgSrc} 
+            />
+        </>
     )
 }
 
 const ImgWithoutCaption = ({ imgSrc }: { imgSrc: string }) => {
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    
     return (
-        <img src={imgSrc} alt="user" className="w-full object-cover max-h-[400px]" />
+        <>
+            <ClickableImage imgSrc={imgSrc} onClick={() => setIsLightboxOpen(true)} rounded />
+            <ImageLightbox 
+                isOpen={isLightboxOpen} 
+                onClose={() => setIsLightboxOpen(false)} 
+                src={imgSrc} 
+            />
+        </>
+    )
+}
+
+const ClickableImage = ({ imgSrc, onClick, rounded = false }: { imgSrc: string, onClick: () => void, rounded?: boolean }) => {
+    return (
+        <img 
+            src={imgSrc} 
+            alt="shared image" 
+            className={classNames(
+                "w-full object-cover max-h-[400px] cursor-pointer hover:opacity-90 transition-opacity",
+                rounded ? "rounded-2xl" : ""
+            )}
+            onClick={onClick}
+        />
     )
 }
 

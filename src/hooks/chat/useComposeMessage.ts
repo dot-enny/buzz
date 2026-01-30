@@ -11,7 +11,13 @@ export interface Img {
   url: string
 }
 
-export const useComposeMessage = () => {
+export interface OptimisticCallbacks {
+    addOptimisticMessage?: (message: any) => string;
+    markMessageFailed?: (tempId: string) => void;
+    markMessageSent?: (tempId: string) => void;
+}
+
+export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
     const { currentUser } = useUserStore();
     const { chatId, user, isGroupChat, groupData } = useChatStore();
 
@@ -40,28 +46,55 @@ export const useComposeMessage = () => {
     const handleSendText = async () => {
         if ((text.trim() === "") && img.file === null) return;
 
-        try {
-            const imgUrl = await handleImageUpload();
-            const hasImage = img.file !== null;
-            const messageText = text.trim();
-            await sendMessage(imgUrl);
-            await updateUserChats(hasImage, messageText);
-        } catch (err) {
-            console.error("Error sending message:", err);
+        const messageText = text.trim();
+        const hasImage = img.file !== null;
+        const imgFile = img.file;
+        const localImgUrl = img.url; // Local preview URL
+        
+        // Create optimistic message
+        let tempId: string | undefined;
+        if (callbacks?.addOptimisticMessage) {
+            const optimisticMessage = {
+                id: `temp_${Date.now()}`,
+                senderId: currentUser.id,
+                text: messageText,
+                ...(localImgUrl && { img: localImgUrl }),
+                ...((isGroupChat || chatId === GLOBAL_CHAT_ID) && { 
+                    senderUsername: currentUser.username, 
+                    senderAvatar: currentUser.avatar 
+                })
+            };
+            tempId = callbacks.addOptimisticMessage(optimisticMessage);
         }
-    };
-
-    const handleImageUpload = async (): Promise<string | null> => {
-        if (img.file) {
-            return await upload(img.file) as string;
-        }
-        return null;
-    };
-
-    const sendMessage = async (imgUrl: string | null) => {
-        const textMessage = text.trim();
+        
+        // Clear input immediately for better UX
         resetInput();
 
+        try {
+            // Upload image if present
+            let imgUrl: string | null = null;
+            if (imgFile) {
+                imgUrl = await upload(imgFile) as string;
+            }
+            
+            // Send to Firebase
+            await sendMessage(messageText, imgUrl);
+            await updateUserChats(hasImage, messageText);
+            
+            // Mark as sent
+            if (tempId && callbacks?.markMessageSent) {
+                callbacks.markMessageSent(tempId);
+            }
+        } catch (err) {
+            console.error("Error sending message:", err);
+            // Mark as failed
+            if (tempId && callbacks?.markMessageFailed) {
+                callbacks.markMessageFailed(tempId);
+            }
+        }
+    };
+
+    const sendMessage = async (textMessage: string, imgUrl: string | null) => {
         if (chatId) {
             const messagesCollectionRef = collection(db, "chats", chatId, "messages");
 

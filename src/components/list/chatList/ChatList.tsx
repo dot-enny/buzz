@@ -69,11 +69,14 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
     const sender = chat.user;
     const userBlocked = sender.blocked.includes(currentUser.id) || currentUser.blocked.includes(sender.id) || isCurrentUserBlocked || isReceiverBlocked;
     const lastMessagePreview = chat.lastMessage;
+    
+    // Only show unread highlight if there's actually an unread message (not just a new empty chat)
+    const hasUnreadMessage = !chat.isSeen && unreadCount > 0 && !!chat.lastMessage;
 
     return (
         <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
             style={{
-                backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
+                backgroundColor: hasUnreadMessage ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
             }}
         >            {!isLoading ? (
                 <Avatar 
@@ -113,13 +116,16 @@ const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat
     const unreadCount = chat.unreadCount || 0;
     const groupName = chat.groupName || 'Unnamed Group';
     const groupPhoto = chat.groupPhotoURL;
+    
+    // Only show unread highlight if there's actually an unread message
+    const hasUnreadMessage = !chat.isSeen && unreadCount > 0 && !!chat.lastMessage;
 
     return (
         <div 
             onClick={() => onClick(chat)} 
             className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
             style={{
-                backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
+                backgroundColor: hasUnreadMessage ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
             }}
         >
             {!isLoading ? (
@@ -166,10 +172,13 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
 
     const { isLoading, lastMessage } = useGlobalChatLastMessage();
     const unreadCount = chat?.unreadCount || 0;
+    
+    // Only show unread highlight if there's actually an unread message
+    const hasUnreadMessage = !chat?.isSeen && unreadCount > 0 && !!lastMessage;
 
     return (<div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
         style={{
-            backgroundColor: chat?.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
+            backgroundColor: hasUnreadMessage ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
         }}
     >
         {!isLoading ? (

@@ -2,12 +2,14 @@ import { collection, doc, setDoc, serverTimestamp, updateDoc, arrayUnion, getDoc
 import { useState } from "react";
 import { db } from "../lib/firebase";
 import { useUserStore } from "../lib/userStore";
+import { useChatStore } from "../lib/chatStore";
 
-export const useAddUser = () => {
+export const useAddUser = (onUserAdded?: () => void) => {
 
     const { currentUser } = useUserStore();
+    const { changeChat } = useChatStore();
 
-    const [users, setUsers] = useState<(User & { isAdded: boolean; })[]>([]);
+    const [users, setUsers] = useState<(User & { isAdded: boolean; chatId?: string })[]>([]);
     const [filterInput, setFilterInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [addingUserId, setAddingUserId] = useState<string | null>(null);
@@ -57,8 +59,12 @@ export const useAddUser = () => {
             if (!querySnapshot.empty) {
                 const allUsers = await Promise.all(querySnapshot.docs.map(async (doc) => {
                     const user = doc.data() as User;
-                    const isAdded = await checkIfUserIsAlreadyAdded(user.id);
-                    return { ...user, isAdded };
+                    const existingChat = await getExistingChatWithUser(user.id);
+                    return { 
+                        ...user, 
+                        isAdded: !!existingChat,
+                        chatId: existingChat?.chatId 
+                    };
                 }));
                 setUsers(allUsers);
             } else {
@@ -69,6 +75,17 @@ export const useAddUser = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const getExistingChatWithUser = async (userId: string): Promise<{ chatId: string } | null> => {
+        const userChatsRef = doc(db, "userchats", currentUser.id);
+        const userChatsDoc = await getDoc(userChatsRef);
+        if (userChatsDoc.exists()) {
+            const userChats = userChatsDoc.data().chats;
+            const existingChat = userChats.find((chat: UserChat) => chat.receiverId === userId);
+            return existingChat ? { chatId: existingChat.chatId } : null;
+        }
+        return null;
     };
 
     const addUser = async (user: User) => {
@@ -88,7 +105,10 @@ export const useAddUser = () => {
                 chats: arrayUnion({
                     chatId: newChatRef.id,
                     lastMessage: "",
-                    receiverId: currentUser.id
+                    receiverId: currentUser.id,
+                    isSeen: true,
+                    unreadCount: 0,
+                    updatedAt: Date.now()
                 })
             });
 
@@ -96,9 +116,18 @@ export const useAddUser = () => {
                 chats: arrayUnion({
                     chatId: newChatRef.id,
                     lastMessage: "",
-                    receiverId: user.id
+                    receiverId: user.id,
+                    isSeen: true,
+                    unreadCount: 0,
+                    updatedAt: Date.now()
                 })
             });
+
+            // Open the chat immediately after adding
+            changeChat(newChatRef.id, user);
+            
+            // Callback to close modal
+            onUserAdded?.();
 
             fetchUsers();
 
@@ -109,16 +138,13 @@ export const useAddUser = () => {
         }
     };
 
-    const checkIfUserIsAlreadyAdded = async (userId: string) => {
-        const userChatsRef = doc(db, "userchats", currentUser.id);
-        const userChatsDoc = await getDoc(userChatsRef);
-        if (userChatsDoc.exists()) {
-            const userChats = userChatsDoc.data().chats;
-            return userChats.some((chat: UserChat) => chat.receiverId === userId);
-        } else {
-            return false;
+    // Open an existing chat with a user
+    const openExistingChat = (user: User & { chatId?: string }) => {
+        if (user.chatId) {
+            changeChat(user.chatId, user);
+            onUserAdded?.();
         }
     };
 
-    return { isLoading, addingUserId, addUser, fetchUsers, setFilterInput, filteredUsers };
+    return { isLoading, addingUserId, addUser, openExistingChat, fetchUsers, setFilterInput, filteredUsers };
 }

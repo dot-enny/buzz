@@ -12,16 +12,16 @@ Make messages interactive and visually impressive.
 
 | Feature | Priority | Status | Complexity |
 |---------|----------|--------|------------|
-| **Image Lightbox** | High | ⬜ TODO | Medium |
+| **Image Lightbox** | High | ✅ DONE | Medium |
 | **Rich Link Previews** | High | ⬜ TODO | Hard |
 | **Giphy Integration** | Medium | ⬜ TODO | Medium |
 
 #### 1.1 Image Lightbox
-- [ ] Install lightbox library (yet-another-react-lightbox)
-- [ ] Create Lightbox component wrapper
-- [ ] Integrate with message images
-- [ ] Add zoom, download, and share options
-- [ ] Keyboard navigation (arrow keys, ESC to close)
+- [x] Install lightbox library (yet-another-react-lightbox)
+- [x] Create Lightbox component wrapper
+- [x] Integrate with message images
+- [x] Add zoom, download, and share options
+- [x] Keyboard navigation (arrow keys, ESC to close)
 
 #### 1.2 Rich Link Previews
 - [ ] URL detection in messages (regex pattern)
@@ -46,16 +46,16 @@ Prove understanding of performance and complex data synchronization.
 
 | Feature | Priority | Status | Complexity |
 |---------|----------|--------|------------|
-| **Optimistic UI Updates** | High | ⬜ TODO | Hard |
+| **Optimistic UI Updates** | High | ✅ DONE | Hard |
 | **Message Search** | High | ⬜ TODO | Medium |
 | **@Mentions** | Medium | ⬜ TODO | Medium |
 
 #### 2.1 Optimistic UI Updates
-- [ ] Update message state structure (add `status: 'sending' | 'sent' | 'failed'`)
-- [ ] Show message immediately in UI with "sending" indicator
-- [ ] Perform Firebase write in background
-- [ ] Update status to "sent" on success
-- [ ] Show "failed" with retry option on error
+- [x] Update message state structure (add `status: 'sending' | 'sent' | 'failed'`)
+- [x] Show message immediately in UI with "sending" indicator
+- [x] Perform Firebase write in background
+- [x] Update status to "sent" on success
+- [x] Show "failed" with retry option on error
 - [ ] Handle offline scenarios
 
 #### 2.2 Message Search

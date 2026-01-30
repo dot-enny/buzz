@@ -22,6 +22,7 @@
     "react-router-dom": "^6.23.0",
     "react-toastify": "^10.0.5",
     "timeago.js": "^4.0.2",
+    "yet-another-react-lightbox": "^3.28.0",
     "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {

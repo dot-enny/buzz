@@ -1,12 +1,12 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { ArrowPathIcon, CheckBadgeIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, ChatBubbleLeftIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAddUser } from '../../../../hooks/useAddUser'
 import Tooltip from '../../../ui/Tooltip'
 import { useEffect } from 'react'
 
 export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (val: boolean) => void }) {
 
-  const { fetchUsers, addUser, addingUserId, filteredUsers, setFilterInput } = useAddUser()
+  const { fetchUsers, addUser, openExistingChat, addingUserId, filteredUsers, setFilterInput } = useAddUser(() => setIsOpen(false))
 
   useEffect(() => {
     if (isOpen) fetchUsers();
@@ -29,7 +29,7 @@ export default function AddUser({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
               <div className="flex h-full flex-col overflow-y-scroll bg-neutral-900 shadow-xl">
                 <DrawerHeader setIsOpen={setIsOpen} />
                 <SearchBar setFilterInput={setFilterInput} isLoading={false} />
-                <UserList users={filteredUsers} addUser={addUser} addingUserId={addingUserId} />
+                <UserList users={filteredUsers} addUser={addUser} openExistingChat={openExistingChat} addingUserId={addingUserId} />
               </div>
             </DialogPanel>
           </div>
@@ -60,15 +60,31 @@ const DrawerHeader = ({ setIsOpen }: { setIsOpen: (val: boolean) => void }) => (
   </div>
 )
 
-const UserList = ({ users, addUser, addingUserId }: { users: (User & { isAdded: boolean })[], addUser: (val: User) => void, addingUserId: string | null }) => (
+const UserList = ({ users, addUser, openExistingChat, addingUserId }: { 
+  users: (User & { isAdded: boolean; chatId?: string })[], 
+  addUser: (val: User) => void, 
+  openExistingChat: (val: User & { chatId?: string }) => void,
+  addingUserId: string | null 
+}) => (
   <ul role="list" className="flex-1 divide-y divide-gray-200 overflow-y-auto">
     {users.map((user) => (
-      <UserListItem key={user.id} user={user} addUser={addUser} isAddingUserId={addingUserId == user.id} />
+      <UserListItem 
+        key={user.id} 
+        user={user} 
+        addUser={addUser} 
+        openExistingChat={openExistingChat}
+        isAddingUserId={addingUserId == user.id} 
+      />
     ))}
   </ul>
 )
 
-const UserListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdded: boolean }, addUser: (val: User) => void, isAddingUserId: boolean }) => (
+const UserListItem = ({ user, addUser, openExistingChat, isAddingUserId }: { 
+  user: User & { isAdded: boolean; chatId?: string }, 
+  addUser: (val: User) => void, 
+  openExistingChat: (val: User & { chatId?: string }) => void,
+  isAddingUserId: boolean 
+}) => (
   <li>
     <div className="group relative flex items-center px-5 py-6 hover:bg-gray-800/30">
       <div className="-m-1 block flex-1 p-1">
@@ -79,11 +95,13 @@ const UserListItem = ({ user, addUser, isAddingUserId }: { user: User & { isAdde
         </div>
       </div>
       {/* <DrawerTeamListItemMenu /> */}
-      <button onClick={() => !user.isAdded ? addUser(user) : null}>
+      <button onClick={() => user.isAdded ? openExistingChat(user) : addUser(user)}>
         { user.isAdded ? 
-          <CheckBadgeIcon className="text-white size-7 cursor-default" />
+          <Tooltip tip="Open chat" className="-left-8">
+            <ChatBubbleLeftIcon className="text-white size-6 hover:text-blue-400 transition-colors" />
+          </Tooltip>
           : isAddingUserId ? <ArrowPathIcon className="text-white size-7 animate-spin" /> :
-          <Tooltip tip="add user" className="-left-5">
+          <Tooltip tip="Add user" className="-left-5">
             <PlusIcon className="text-white size-6" />
           </Tooltip>
         }

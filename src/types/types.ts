@@ -35,6 +35,8 @@ interface Message {
         toDate: () => Date;
     };
     readBy?: string[]; // NEW: array of user IDs who have read this message
+    status?: 'sending' | 'sent' | 'failed'; // Optimistic UI status
+    tempId?: string; // Temporary ID for optimistic updates
 }
 
 interface Avatar {

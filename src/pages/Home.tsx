@@ -6,6 +6,7 @@ import { useAppStateStore } from "../lib/appStateStore";
 import { useChatStore } from "../lib/chatStore";
 import { motion, PanInfo } from "framer-motion";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { ConnectionStatus } from "../components/ui/ConnectionStatus";
 
 export default function Home() {
 
@@ -29,6 +30,9 @@ export default function Home() {
 
   return (
     <main className="max-h-screen overflow-clip md:flex relative">
+      {/* Connection Status Banner */}
+      <ConnectionStatus />
+      
       {/* 
         List is flex-1 on desktop.
         On mobile, it's always visible behind the chat (which is absolute/fixed).
