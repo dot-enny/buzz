@@ -9,6 +9,7 @@ import { useAppStateStore } from "../../../lib/appStateStore";
 import { useGlobalChatLastMessage } from "../../../hooks/useGlobalChatLastMessage";
 import { UserInfo } from "../userInfo/UserInfo";
 import { useState } from "react";
+import { Avatar, GroupAvatar } from "../../ui/Avatar";
 
 export const ChatList = () => {
 
@@ -74,13 +75,16 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
             style={{
                 backgroundColor: chat.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
             }}
-        >            {!isLoading ?
-            <img
-                src={userBlocked || !sender.avatar ? '/img/avatar-placeholder.png' : sender.avatar}
-                alt="user"
-                className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
-            <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
-            }
+        >            {!isLoading ? (
+                <Avatar 
+                    src={userBlocked ? null : sender.avatar}
+                    name={sender.username}
+                    size="md"
+                    className="min-w-12 max-w-12"
+                />
+            ) : (
+                <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+            )}
             <div className="flex-1">
                 {!isLoading ?
                     (<>
@@ -119,19 +123,12 @@ const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat
             }}
         >
             {!isLoading ? (
-                <div className="relative min-w-12 max-w-12 h-12">
-                    {groupPhoto ? (
-                        <img
-                            src={groupPhoto}
-                            alt={groupName}
-                            className="w-full h-full rounded-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                            <UserGroupIcon className="w-6 h-6 text-white" />
-                        </div>
-                    )}
-                </div>
+                <GroupAvatar 
+                    src={groupPhoto}
+                    name={groupName}
+                    size="md"
+                    className="min-w-12 max-w-12"
+                />
             ) : (
                 <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
             )}
@@ -139,10 +136,7 @@ const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat
             <div className="flex-1">
                 {!isLoading ? (
                     <>
-                        <div className="flex items-center gap-2">
-                            <h2>{groupName}</h2>
-                            <UserGroupIcon className="w-4 h-4 text-neutral-500" />
-                        </div>
+                        <h2>{groupName}</h2>
                         <p className="text-neutral-500 line-clamp-1">{lastMessagePreview || 'No messages yet'}</p>
                     </>
                 ) : (
@@ -178,13 +172,16 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
             backgroundColor: chat?.isSeen ? 'transparent' : 'rgba(255, 255, 255, 0.1)'
         }}
     >
-        {!isLoading ?
-            <img
-                src="/img/avatar-placeholder.png"
-                alt="user"
-                className="min-w-12 max-w-12 h-12 rounded-full object-cover" /> :
-            <div className="size-12 rounded-full bg-gradient-to-r  from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
-        }
+        {!isLoading ? (
+            <Avatar 
+                src={null}
+                name="Global Buzz"
+                size="md"
+                className="min-w-12 max-w-12"
+            />
+        ) : (
+            <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+        )}
         <div className="flex-1">
             {!isLoading ?
                 (<>

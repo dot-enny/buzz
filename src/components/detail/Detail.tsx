@@ -5,13 +5,17 @@ import { useChatStore } from "../../lib/chatStore"
 import { useBlockUser } from "../../hooks/chat-details/useBlockUser"
 import { useSignOut } from "../../hooks/useSignOut"
 import { ArrowLeftStartOnRectangleIcon } from "@heroicons/react/24/outline"
+import { Avatar, GroupAvatar } from "../ui/Avatar"
+import { useState } from "react"
+import EditGroupInfo from "./EditGroupInfo"
+import { useUserStore } from "../../lib/userStore"
 
 export const Detail = () => {
 
   const { chatId, isGlobalChat, isGroupChat, isReceiverBlocked } = useChatStore();
   const { handleBlock } = useBlockUser();
-
   const { signOut } = useSignOut();
+  const [isEditGroupOpen, setIsEditGroupOpen] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col h-[100svh] xl:relative">
@@ -24,7 +28,7 @@ export const Detail = () => {
             </h3>
           </div>
         ) : (
-          <ChatDetails />
+          <ChatDetails onEditGroup={() => setIsEditGroupOpen(true)} />
         )
       }
 
@@ -45,41 +49,48 @@ export const Detail = () => {
           </div>
         </div>
       </div>
+      
+      <EditGroupInfo isOpen={isEditGroupOpen} setIsOpen={setIsEditGroupOpen} />
     </div>
 
   )
 }
 
-const ChatDetails = () => {
+const ChatDetails = ({ onEditGroup }: { onEditGroup: () => void }) => {
   const { isGlobalChat, isGroupChat, user, groupData, isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+  const { currentUser } = useUserStore();
   const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
+  const isAdmin = groupData?.admins?.includes(currentUser.id);
 
   return (
     <div className="user py-7 px-5 flex flex-col items-center gap-3 border-b border-neutral-800">
       {
         isGlobalChat ? (
           <>
-            <img src="./img/avatar-placeholder.png" alt="user" className="w-24 h-24 rounded-full object-cover" />
+            <Avatar src={null} name="Global Buzz" size="xl" />
             <h2>Global Buzz</h2>
             <p className="text-neutral-500">Buzz all the way!</p>
           </>
         ) : isGroupChat && groupData ? (
           <>
-            {groupData.groupPhotoURL ? (
-              <img src={groupData.groupPhotoURL} alt={groupData.groupName} className="w-24 h-24 rounded-full object-cover" />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            )}
+            <GroupAvatar src={groupData.groupPhotoURL} name={groupData.groupName} size="xl" />
             <h2>{groupData.groupName}</h2>
+            {groupData.groupDescription && (
+              <p className="text-neutral-400 text-sm text-center max-w-xs">{groupData.groupDescription}</p>
+            )}
             <p className="text-neutral-500">{groupData.participants?.length || 0} members</p>
+            {isAdmin && (
+              <button 
+                onClick={onEditGroup}
+                className="mt-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
+              >
+                Edit Group Info
+              </button>
+            )}
           </>
         ) : (
           <>
-            <img src={!isBlocked ? user.avatar : './img/avatar-placeholder.png'} alt="user" className="w-24 h-24 rounded-full object-cover" />
+            <Avatar src={isBlocked ? null : user.avatar} name={user.username} size="xl" />
             <h2>{user.username}</h2>
             <p className="text-neutral-500">{isReceiverBlocked ? 'You blocked this user !' : isCurrentUserBlocked ? 'This user blocked you !' : user.status}</p>
           </>

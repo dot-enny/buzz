@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { classNames } from "../../../utils/helpers";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { groupMessagesByDate } from "../../../utils/dateHelpers";
+import { Avatar } from "../../ui/Avatar";
 
 interface MessageProps {
     id: string;
@@ -139,13 +140,25 @@ const MessageAvatar = ({ message }: { message: any }) => {
     const { user, isCurrentUserBlocked, isReceiverBlocked, isGlobalChat, isGroupChat } = useChatStore();
     const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
 
+    // For group/global chats, use sender's avatar and username
+    if (isGlobalChat || isGroupChat) {
+        return (
+            <Avatar 
+                src={message.senderAvatar} 
+                name={message.senderUsername || 'Unknown'} 
+                size="xs"
+            />
+        );
+    }
+
+    // For 1-on-1 chats, use the other user's avatar
     return (
-        <img
-            src={(isGlobalChat || isGroupChat) ? message.senderAvatar : !isBlocked ? user.avatar : './img/avatar-placeholder.png'}
-            alt="user"
-            className="w-7 h-7 rounded-full object-cover"
+        <Avatar 
+            src={isBlocked ? null : user.avatar} 
+            name={user.username} 
+            size="xs"
         />
-    )
+    );
 }
 
 const MessageBody = ({ message, isCurrentUser }: { message: any, isCurrentUser: boolean }) => {
