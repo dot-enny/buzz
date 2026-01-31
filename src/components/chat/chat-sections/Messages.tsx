@@ -10,7 +10,6 @@ import { groupMessagesByDate } from "../../../utils/dateHelpers";
 import { Avatar } from "../../ui/Avatar";
 import { ImageLightbox } from "../../ui/ImageLightbox";
 import { bubblySpring } from "../../ui/ConnectionStatus";
-import { LinkPreview } from "../../ui/LinkPreview";
 import { useMessageLinkPreviews } from "../../../hooks/chat/useLinkPreview";
 import { HighlightedText } from "../../ui/HighlightedText";
 
@@ -405,39 +404,143 @@ const MessageParagraph = ({ text, username, isCurrentUser, matchIndices }: {
 }) => {
     const { isGlobalChat, isGroupChat } = useChatStore();
     const linkPreviews = useMessageLinkPreviews(text);
+    
+    // Check if we have successful previews (not loading, not error)
+    const hasSuccessfulPreviews = linkPreviews.some(p => !p.isLoading && !p.error && p.title);
+    
+    // Check if the text is ONLY a URL (no other content)
+    const trimmedText = text.trim();
+    const urlOnlyRegex = /^https?:\/\/[^\s<>"{}|\\^`[\]]+$/;
+    const isUrlOnly = urlOnlyRegex.test(trimmedText);
 
     return (
-        <div className="flex flex-col">
-            <p className={classNames(
-                'text-white rounded-2xl break-all max-w-fit px-4 py-2.5 shadow-lg flex flex-col gap-1',
-                isCurrentUser
-                    ? 'bg-gradient-to-br from-blue-600 to-blue-700'
-                    : 'bg-neutral-800/90 backdrop-blur-sm'
-            )}>
-                {(isGlobalChat || isGroupChat) && !isCurrentUser && (
+        <div className={classNames(
+            'rounded-2xl overflow-hidden shadow-lg max-w-[320px]',
+            isCurrentUser
+                ? 'bg-gradient-to-br from-blue-600 to-blue-700'
+                : 'bg-neutral-800/90 backdrop-blur-sm'
+        )}>
+            {/* Text content - hide URL if it's the only content and preview exists */}
+            {(!isUrlOnly || !hasSuccessfulPreviews) && (
+                <div className="px-4 py-2.5 flex flex-col gap-1">
+                    {(isGlobalChat || isGroupChat) && !isCurrentUser && (
+                        <span className="text-xs text-blue-400 font-semibold">{username}</span>
+                    )}
+                    <span className="text-white text-[15px] leading-relaxed break-words">
+                        <HighlightedText 
+                            text={text} 
+                            matchIndices={matchIndices} 
+                            hideUrls={hasSuccessfulPreviews && !isUrlOnly}
+                        />
+                    </span>
+                </div>
+            )}
+            
+            {/* Show username for URL-only messages with previews */}
+            {isUrlOnly && hasSuccessfulPreviews && (isGlobalChat || isGroupChat) && !isCurrentUser && (
+                <div className="px-4 pt-2.5">
                     <span className="text-xs text-blue-400 font-semibold">{username}</span>
-                )}
-                <span className="text-[15px] leading-relaxed">
-                    <HighlightedText text={text} matchIndices={matchIndices} />
-                </span>
-            </p>
-            {/* Link Previews */}
+                </div>
+            )}
+            
+            {/* Integrated Link Previews */}
             {linkPreviews.length > 0 && (
-                <div className={classNames(
-                    "max-w-[320px]",
-                    isCurrentUser ? "self-end" : "self-start"
-                )}>
+                <div className="border-t border-white/10">
                     {linkPreviews.map((preview, i) => (
-                        <LinkPreview 
+                        <IntegratedLinkPreview 
                             key={preview.url + i} 
-                            preview={preview} 
-                            isCurrentUser={isCurrentUser}
+                            preview={preview}
                         />
                     ))}
                 </div>
             )}
         </div>
     )
+}
+
+// Integrated preview that fits inside the message bubble
+const IntegratedLinkPreview = ({ preview }: { 
+    preview: any; 
+}) => {
+    if (preview.isLoading) {
+        return (
+            <div className="p-3 animate-pulse">
+                <div className="flex gap-3">
+                    <div className="w-12 h-12 rounded bg-white/10" />
+                    <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-white/10 rounded w-3/4" />
+                        <div className="h-2 bg-white/10 rounded w-full" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (preview.error || !preview.title) {
+        // Show URL as clickable link if preview failed
+        return (
+            <a 
+                href={preview.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-3 text-blue-300 hover:underline text-sm truncate"
+            >
+                {preview.url}
+            </a>
+        );
+    }
+
+    return (
+        <a
+            href={preview.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:bg-white/5 transition-colors"
+        >
+            {/* Image if available */}
+            {preview.image && (
+                <div className="aspect-video bg-black/20">
+                    <img 
+                        src={preview.image} 
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                    />
+                </div>
+            )}
+            
+            <div className="p-3">
+                {/* Title */}
+                <h4 className="font-medium text-white text-sm line-clamp-2">
+                    {preview.title}
+                </h4>
+                
+                {/* Description */}
+                {preview.description && (
+                    <p className="text-xs text-white/60 mt-1 line-clamp-2">
+                        {preview.description}
+                    </p>
+                )}
+                
+                {/* Site info */}
+                <div className="flex items-center gap-2 mt-2 text-xs text-white/40">
+                    {preview.favicon && (
+                        <img 
+                            src={preview.favicon} 
+                            alt=""
+                            className="w-3 h-3 rounded"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                        />
+                    )}
+                    <span className="truncate">{preview.siteName}</span>
+                </div>
+            </div>
+        </a>
+    );
 }
 
 Message.displayName = "Message";
