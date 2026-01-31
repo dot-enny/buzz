@@ -4,22 +4,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables for theming */
+:root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #171717;
+    --bg-tertiary: #262626;
+    --text-primary: #ffffff;
+    --text-secondary: #a3a3a3;
+    --text-muted: #737373;
+    --border-color: #262626;
+    --accent-color: #3b82f6;
+    --message-own: #1e40af;
+    --message-other: #262626;
+}
+
+:root.light, [data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #e5e5e5;
+    --text-primary: #171717;
+    --text-secondary: #525252;
+    --text-muted: #737373;
+    --border-color: #e5e5e5;
+    --accent-color: #3b82f6;
+    --message-own: #3b82f6;
+    --message-other: #f5f5f5;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: #171717 transparent;
+    scrollbar-color: var(--bg-tertiary) transparent;
 }
 
 body {
-    background: #0a0a0a;
-    color: white;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     font-family: 'Nunito', sans-serif;
-    /* width: 100dvw;
-    height: 100dvh; */
-    /* border: 1px solid red;
-    width: minmax() */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .auth-form {
@@ -53,7 +77,8 @@ body {
 }
 
 .frosted-glass {
-    @apply bg-[#0a0a0a] bg-opacity-90 backdrop-filter backdrop-blur-md;
+    @apply bg-opacity-90 backdrop-filter backdrop-blur-md;
+    background-color: var(--bg-primary);
     /* backdrop-filter: blur (6px);
     -webkit-backdrop-filter: blur (6px); */
 }

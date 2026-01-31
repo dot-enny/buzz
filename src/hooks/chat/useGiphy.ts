@@ -29,9 +29,8 @@ interface GiphyResponse {
     }>;
 }
 
-// Giphy API key (free tier - 100 requests/hour)
-// In production, this should be an env variable
-const GIPHY_API_KEY = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65';
+// Giphy API key from environment variable
+const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY;
 
 const GIPHY_BASE_URL = 'https://api.giphy.com/v1/gifs';
 
