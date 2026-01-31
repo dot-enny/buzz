@@ -88,7 +88,7 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
                                     
                                     return (
                                         <Message
-                                            key={message.id || message.createdAt.toDate().toISOString()}
+                                            key={message.id || message.createdAt?.toDate?.()?.toISOString() || `msg-${Math.random()}`}
                                             message={message}
                                             index={globalIndex}
                                             animate={globalIndex >= messages.length - messagesToAnimate}
@@ -259,7 +259,7 @@ const MessageBody = ({ message, isCurrentUser, matchIndices }: {
             <div className="flex items-center gap-1.5 px-1">
                 {/* Time or status text */}
                 <span className="text-[11px] text-neutral-400">
-                    {isFailed ? 'Failed' : formatTime(message.createdAt.toDate())}
+                    {isFailed ? 'Failed' : formatTime(message.createdAt?.toDate?.() || new Date())}
                 </span>
 
                 {/* Status indicators (only for sender's messages) */}

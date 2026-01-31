@@ -38,7 +38,7 @@ export default function Home() {
         On mobile, it's always visible behind the chat (which is absolute/fixed).
         We removed 'max-md:hidden' so it stays visible during swipe. 
       */}
-      <div className="flex-1 w-full max-w-full">
+      <div className="flex-1 w-full min-w-0 overflow-hidden">
         <List />
       </div>
 

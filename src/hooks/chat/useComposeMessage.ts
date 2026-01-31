@@ -169,14 +169,19 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
         }
     };
 
-    const updateUserChats = async (hasImage: boolean, messageText: string, actualChatId?: string | null) => {
+    const updateUserChats = async (hasImage: boolean, messageText: string, actualChatId?: string | null, isGif: boolean = false) => {
         const targetChatId = actualChatId || chatId;
         if (!targetChatId || isTempChat(targetChatId)) return;
         
         // Create last message preview
-        const lastMessageText = messageText
-            ? (hasImage ? `📷 ${messageText}` : messageText)
-            : (hasImage ? '📷 Photo' : '');
+        let lastMessageText: string;
+        if (isGif) {
+            lastMessageText = 'GIF';
+        } else if (messageText) {
+            lastMessageText = hasImage ? `📷 ${messageText}` : messageText;
+        } else {
+            lastMessageText = hasImage ? '📷 Photo' : '';
+        }
         
         // For group chats, update all participants
         if (isGroupChat && groupData?.participants) {
@@ -304,7 +309,7 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
 
             // Update userchats with last message (for 1-on-1 chats)
             if (!useChatStore.getState().isGroupChat && !useChatStore.getState().isGlobalChat) {
-                await updateUserChats(true, 'GIF', actualChatId);
+                await updateUserChats(true, '', actualChatId, true);
             }
         } catch (err) {
             console.error('Error sending GIF:', err);

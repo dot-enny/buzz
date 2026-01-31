@@ -8,15 +8,18 @@ import { SignUp } from './pages/SignUp.tsx'
 import { AuthLayout } from './layouts/Auth.tsx'
 import { Notification } from './components/notification/Notification.tsx'
 import { ProtectedRoute } from './components/ProtectedRoute.tsx'
+import { RouteErrorBoundary } from './components/ui/ErrorBoundary.tsx'
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <ProtectedRoute><Home /></ProtectedRoute>,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/auth',
     element: <AuthLayout />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       { path: 'sign-in', element: <SignIn />, },
       { path: 'sign-up', element: <SignUp /> },

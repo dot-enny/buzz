@@ -26,7 +26,7 @@ export const ChatList = () => {
     }
 
     return (
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
             <div className="sticky top-0 frosted-glass z-10">
                 <UserInfo />
                 <div className="flex items-center gap-5 p-5">
@@ -37,7 +37,7 @@ export const ChatList = () => {
                     </div>
                 </div>
             </div>
-            <div>
+            <div className="overflow-hidden">
                 <GlobalChatItem chat={globalChat} onClick={handleChatClick} />
                 {
                     filteredChats ?
@@ -74,7 +74,7 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
     const hasUnreadMessage = !chat.isSeen && unreadCount > 0 && !!chat.lastMessage;
 
     return (
-        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
+        <div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative overflow-hidden"
             style={{
                 backgroundColor: hasUnreadMessage ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
             }}
@@ -83,16 +83,16 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
                     src={userBlocked ? null : sender.avatar}
                     name={sender.username}
                     size="md"
-                    className="min-w-12 max-w-12"
+                    className="min-w-12 max-w-12 shrink-0"
                 />
             ) : (
-                <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+                <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50 shrink-0" />
             )}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 overflow-hidden">
                 {!isLoading ?
                     (<>
-                        <h2>{sender.username}</h2>
-                        <p className="text-neutral-500 line-clamp-1">{lastMessagePreview}</p>
+                        <h2 className="truncate">{sender.username}</h2>
+                        <p className="text-neutral-500 truncate">{lastMessagePreview}</p>
                     </>) : (
                         <div className="opacity-50">
                             <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
@@ -123,7 +123,7 @@ const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat
     return (
         <div 
             onClick={() => onClick(chat)} 
-            className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
+            className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative overflow-hidden"
             style={{
                 backgroundColor: hasUnreadMessage ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
             }}
@@ -133,17 +133,17 @@ const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat
                     src={groupPhoto}
                     name={groupName}
                     size="md"
-                    className="min-w-12 max-w-12"
+                    className="min-w-12 max-w-12 shrink-0"
                 />
             ) : (
-                <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+                <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50 shrink-0" />
             )}
             
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 overflow-hidden">
                 {!isLoading ? (
                     <>
-                        <h2>{groupName}</h2>
-                        <p className="text-neutral-500 line-clamp-1">{lastMessagePreview || 'No messages yet'}</p>
+                        <h2 className="truncate">{groupName}</h2>
+                        <p className="text-neutral-500 truncate">{lastMessagePreview || 'No messages yet'}</p>
                     </>
                 ) : (
                     <div className="opacity-50">
@@ -176,7 +176,7 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
     // Only show unread highlight if there's actually an unread message
     const hasUnreadMessage = !chat?.isSeen && unreadCount > 0 && !!lastMessage;
 
-    return (<div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative"
+    return (<div onClick={() => onClick(chat)} className="flex items-center gap-5 p-5 cursor-pointer border-b border-b-gray-800 relative overflow-hidden"
         style={{
             backgroundColor: hasUnreadMessage ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
         }}
@@ -186,16 +186,16 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
                 src={null}
                 name="Global Buzz"
                 size="md"
-                className="min-w-12 max-w-12"
+                className="min-w-12 max-w-12 shrink-0"
             />
         ) : (
-            <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50" />
+            <div className="size-12 rounded-full bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse opacity-50 shrink-0" />
         )}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0 overflow-hidden">
             {!isLoading ?
                 (<>
-                    <h2>Global Buzz</h2>
-                    <p className="text-neutral-500 line-clamp-1">{lastMessage?.senderUsername}: {lastMessage?.text ?? 'Welcome to buzz global chat'}</p>
+                    <h2 className="truncate">Global Buzz</h2>
+                    <p className="text-neutral-500 truncate">{lastMessage?.senderUsername}: {lastMessage?.text ?? 'Welcome to buzz global chat'}</p>
                 </>) : (
                     <div className="opacity-50">
                         <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
