@@ -263,6 +263,9 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
                 senderUsername: currentUser.username,
                 text: '',
                 img: gifUrl,
+                createdAt: {
+                    toDate: () => new Date()
+                }
             };
             tempId = callbacks.addOptimisticMessage(optimisticMessage);
         }
