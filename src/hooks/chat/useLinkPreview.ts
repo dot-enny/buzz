@@ -23,6 +23,9 @@ const YOUTUBE_REGEX = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be
 // GitHub repo pattern
 const GITHUB_REPO_REGEX = /github\.com\/([^\/]+)\/([^\/\s?#]+)/;
 
+// GitHub profile pattern (just username, no repo)
+const GITHUB_PROFILE_REGEX = /github\.com\/([^\/\s?#]+)\/?$/;
+
 /**
  * Extract all URLs from text
  */
@@ -48,13 +51,41 @@ export const getGitHubRepo = (url: string): { owner: string; repo: string } | nu
 };
 
 /**
+ * Check if URL is a GitHub profile (not a repo)
+ */
+export const getGitHubProfile = (url: string): string | null => {
+    // First check it's not a repo
+    if (GITHUB_REPO_REGEX.test(url)) return null;
+    const match = url.match(GITHUB_PROFILE_REGEX);
+    return match ? match[1] : null;
+};
+
+/**
  * Fetch link preview data from API
  */
 const fetchLinkPreview = async (url: string): Promise<Partial<LinkPreviewData>> => {
     try {
-        // Check for YouTube - use thumbnail directly
+        // Check for YouTube - fetch actual title from oEmbed API
         const youtubeId = getYouTubeVideoId(url);
         if (youtubeId) {
+            try {
+                // Use YouTube oEmbed to get real title
+                const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`;
+                const response = await fetch(oembedUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    return {
+                        url,
+                        title: data.title || 'YouTube Video',
+                        description: data.author_name ? `by ${data.author_name}` : undefined,
+                        image: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
+                        siteName: 'YouTube',
+                        favicon: 'https://www.youtube.com/favicon.ico',
+                    };
+                }
+            } catch {
+                // Fallback if oEmbed fails
+            }
             return {
                 url,
                 title: 'YouTube Video',
@@ -64,21 +95,45 @@ const fetchLinkPreview = async (url: string): Promise<Partial<LinkPreviewData>> 
             };
         }
 
-        // Check for GitHub - use opengraph.io or similar
+        // Check for GitHub profile
+        const githubProfile = getGitHubProfile(url);
+        if (githubProfile) {
+            try {
+                const response = await fetch(`https://api.github.com/users/${githubProfile}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return {
+                        url,
+                        title: data.name || data.login,
+                        description: data.bio || `${data.public_repos} public repos · ${data.followers} followers`,
+                        image: data.avatar_url,
+                        siteName: 'GitHub',
+                        favicon: 'https://github.com/favicon.ico',
+                    };
+                }
+            } catch {
+                // Fall through to generic preview
+            }
+        }
+
+        // Check for GitHub repo
         const githubRepo = getGitHubRepo(url);
         if (githubRepo) {
-            // Fetch from GitHub API (no auth needed for public repos)
-            const response = await fetch(`https://api.github.com/repos/${githubRepo.owner}/${githubRepo.repo}`);
-            if (response.ok) {
-                const data = await response.json();
-                return {
-                    url,
-                    title: data.full_name,
-                    description: data.description || 'No description',
-                    image: data.owner?.avatar_url,
-                    siteName: 'GitHub',
-                    favicon: 'https://github.com/favicon.ico',
-                };
+            try {
+                const response = await fetch(`https://api.github.com/repos/${githubRepo.owner}/${githubRepo.repo}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return {
+                        url,
+                        title: data.full_name,
+                        description: data.description || `⭐ ${data.stargazers_count} · ${data.language || 'Code'}`,
+                        image: data.owner?.avatar_url,
+                        siteName: 'GitHub',
+                        favicon: 'https://github.com/favicon.ico',
+                    };
+                }
+            } catch {
+                // Fall through to generic preview
             }
         }
 
