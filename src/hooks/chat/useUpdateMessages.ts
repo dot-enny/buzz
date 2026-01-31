@@ -117,7 +117,7 @@ export const useUpdateMessages = () => {
     }, []);
 
     return { 
-        messages: isLoading ? null : (allMessages || []),
+        messages: allMessages,
         isLoading,
         endRef, 
         addOptimisticMessage, 
