@@ -10,6 +10,8 @@ import { groupMessagesByDate } from "../../../utils/dateHelpers";
 import { Avatar } from "../../ui/Avatar";
 import { ImageLightbox } from "../../ui/ImageLightbox";
 import { bubblySpring } from "../../ui/ConnectionStatus";
+import { LinkPreview } from "../../ui/LinkPreview";
+import { useMessageLinkPreviews } from "../../../hooks/chat/useLinkPreview";
 import { HighlightedText } from "../../ui/HighlightedText";
 
 // Format time as "2:34 PM"
@@ -402,21 +404,39 @@ const MessageParagraph = ({ text, username, isCurrentUser, matchIndices }: {
     matchIndices?: [number, number][] | null
 }) => {
     const { isGlobalChat, isGroupChat } = useChatStore();
+    const linkPreviews = useMessageLinkPreviews(text);
 
     return (
-        <p className={classNames(
-            'text-white rounded-2xl break-all max-w-fit px-4 py-2.5 shadow-lg flex flex-col gap-1',
-            isCurrentUser
-                ? 'bg-gradient-to-br from-blue-600 to-blue-700'
-                : 'bg-neutral-800/90 backdrop-blur-sm'
-        )}>
-            {(isGlobalChat || isGroupChat) && !isCurrentUser && (
-                <span className="text-xs text-blue-400 font-semibold">{username}</span>
+        <div className="flex flex-col">
+            <p className={classNames(
+                'text-white rounded-2xl break-all max-w-fit px-4 py-2.5 shadow-lg flex flex-col gap-1',
+                isCurrentUser
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-700'
+                    : 'bg-neutral-800/90 backdrop-blur-sm'
+            )}>
+                {(isGlobalChat || isGroupChat) && !isCurrentUser && (
+                    <span className="text-xs text-blue-400 font-semibold">{username}</span>
+                )}
+                <span className="text-[15px] leading-relaxed">
+                    <HighlightedText text={text} matchIndices={matchIndices} />
+                </span>
+            </p>
+            {/* Link Previews */}
+            {linkPreviews.length > 0 && (
+                <div className={classNames(
+                    "max-w-[320px]",
+                    isCurrentUser ? "self-end" : "self-start"
+                )}>
+                    {linkPreviews.map((preview, i) => (
+                        <LinkPreview 
+                            key={preview.url + i} 
+                            preview={preview} 
+                            isCurrentUser={isCurrentUser}
+                        />
+                    ))}
+                </div>
             )}
-            <span className="text-[15px] leading-relaxed">
-                <HighlightedText text={text} matchIndices={matchIndices} />
-            </span>
-        </p>
+        </div>
     )
 }
 
