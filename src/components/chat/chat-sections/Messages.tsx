@@ -1,6 +1,6 @@
 import { useChatStore } from "../../../lib/chatStore";
 import { useUserStore } from "../../../lib/userStore";
-import React, { useState, RefObject } from "react";
+import React, { useState, RefObject, useEffect, useRef } from "react";
 import { Spinner } from "../../ui/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { classNames } from "../../../utils/helpers";
@@ -10,6 +10,7 @@ import { groupMessagesByDate } from "../../../utils/dateHelpers";
 import { Avatar } from "../../ui/Avatar";
 import { ImageLightbox } from "../../ui/ImageLightbox";
 import { bubblySpring } from "../../ui/ConnectionStatus";
+import { HighlightedText } from "../../ui/HighlightedText";
 
 // Format time as "2:34 PM"
 const formatTime = (date: Date): string => {
@@ -37,14 +38,34 @@ interface MessageProps {
 interface MessagesComponentProps {
     messages: MessageProps[] | null;
     endRef: RefObject<HTMLDivElement>;
+    activeSearchResultId?: string;
+    getMatchIndices?: (messageId: string) => [number, number][] | null;
 }
 
-export const Messages = ({ messages, endRef }: MessagesComponentProps) => {
+export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndices }: MessagesComponentProps) => {
     const { isGlobalChat, isGroupChat } = useChatStore();
     const messagesToAnimate = 5; // Number of messages to animate
+    const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
     // Group messages by date
     const groupedMessages = messages ? groupMessagesByDate(messages) : [];
+
+    // Scroll to active search result
+    useEffect(() => {
+        if (activeSearchResultId && messageRefs.current.has(activeSearchResultId)) {
+            const element = messageRefs.current.get(activeSearchResultId);
+            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [activeSearchResultId]);
+
+    // Store ref for a message
+    const setMessageRef = (id: string, element: HTMLDivElement | null) => {
+        if (element) {
+            messageRefs.current.set(id, element);
+        } else {
+            messageRefs.current.delete(id);
+        }
+    };
 
     return (
         <div className="center flex-1 p-5 pt-0 overflow-scroll flex flex-col gap-5 relative">
@@ -61,12 +82,18 @@ export const Messages = ({ messages, endRef }: MessagesComponentProps) => {
                                 {/* Messages for this date */}
                                 {group.messages.map((message: MessageProps) => {
                                     const globalIndex = messages.findIndex((m: any) => m.id === message.id);
+                                    const matchIndices = getMatchIndices?.(message.id) || null;
+                                    const isActiveResult = activeSearchResultId === message.id;
+                                    
                                     return (
                                         <Message
                                             key={message.id || message.createdAt.toDate().toISOString()}
                                             message={message}
                                             index={globalIndex}
                                             animate={globalIndex >= messages.length - messagesToAnimate}
+                                            matchIndices={matchIndices}
+                                            isActiveResult={isActiveResult}
+                                            setRef={(el) => setMessageRef(message.id, el)}
                                         />
                                     );
                                 })}
@@ -129,7 +156,14 @@ const StickyDateSeparator = ({ date }: { date: string }) => {
     );
 };
 
-const Message = React.memo(({ message, index, animate }: { message: MessageProps, index: number, animate: boolean }) => {
+const Message = React.memo(({ message, index, animate, matchIndices, isActiveResult, setRef }: { 
+    message: MessageProps, 
+    index: number, 
+    animate: boolean,
+    matchIndices?: [number, number][] | null,
+    isActiveResult?: boolean,
+    setRef?: (el: HTMLDivElement | null) => void
+}) => {
     const { currentUser } = useUserStore();
 
     const isCurrentUser = message.senderId === currentUser.id;
@@ -138,15 +172,22 @@ const Message = React.memo(({ message, index, animate }: { message: MessageProps
 
     return (
         <motion.div
-            className={`message ${messageClass}`}
+            ref={setRef}
+            className={classNames(
+                `message ${messageClass}`,
+                isActiveResult ? 'ring-2 ring-yellow-500/50 rounded-2xl bg-yellow-500/10' : ''
+            )}
             initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
+            animate={{ 
+                opacity: 1, 
+                scale: 1
+            }}
             transition={animate ? { duration: 0.5, type: "spring", bounce: 0.25, delay: ((index + 1) % messagesToAnimate) * 0.1 } : { duration: 0.1 }}
         >
             {!isCurrentUser && (
                 <MessageAvatar message={message} />
             )}
-            <MessageBody message={message} isCurrentUser={isCurrentUser} />
+            <MessageBody message={message} isCurrentUser={isCurrentUser} matchIndices={matchIndices} />
         </motion.div>
     );
 });
@@ -176,7 +217,11 @@ const MessageAvatar = ({ message }: { message: any }) => {
     );
 }
 
-const MessageBody = ({ message, isCurrentUser }: { message: MessageProps, isCurrentUser: boolean }) => {
+const MessageBody = ({ message, isCurrentUser, matchIndices }: { 
+    message: MessageProps, 
+    isCurrentUser: boolean,
+    matchIndices?: [number, number][] | null 
+}) => {
 
     // Check if message has been read
     const isRead = message.readBy && message.readBy.length > 0;
@@ -188,12 +233,26 @@ const MessageBody = ({ message, isCurrentUser }: { message: MessageProps, isCurr
         <div className={classNames("texts flex-1 flex flex-col gap-1", isSending ? "opacity-70" : "")}>
             {/* Show sender name for group/global chats */}
 
-            {(message.img && message.text) ? <ImgWithCaption imgSrc={message.img} text={message.text} isCurrentUser={isCurrentUser} /> :
+            {(message.img && message.text) ? (
+                <ImgWithCaption 
+                    imgSrc={message.img} 
+                    text={message.text} 
+                    isCurrentUser={isCurrentUser} 
+                    matchIndices={matchIndices}
+                />
+            ) : (
                 <>
                     {message.img && <ImgWithoutCaption imgSrc={message.img} />}
-                    {message.text && <MessageParagraph text={message.text} username={!isCurrentUser ? message.senderUsername : undefined} isCurrentUser={isCurrentUser} />}
+                    {message.text && (
+                        <MessageParagraph 
+                            text={message.text} 
+                            username={!isCurrentUser ? message.senderUsername : undefined} 
+                            isCurrentUser={isCurrentUser}
+                            matchIndices={matchIndices}
+                        />
+                    )}
                 </>
-            }
+            )}
 
             {/* MESSAGE TIME AND STATUS */}
             <div className="flex items-center gap-1.5 px-1">
@@ -275,7 +334,12 @@ const MessageBody = ({ message, isCurrentUser }: { message: MessageProps, isCurr
 }
 
 
-const ImgWithCaption = ({ imgSrc, text, isCurrentUser }: { imgSrc: string, text: string, isCurrentUser: boolean }) => {
+const ImgWithCaption = ({ imgSrc, text, isCurrentUser, matchIndices }: { 
+    imgSrc: string, 
+    text: string, 
+    isCurrentUser: boolean,
+    matchIndices?: [number, number][] | null
+}) => {
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     
     return (
@@ -288,7 +352,9 @@ const ImgWithCaption = ({ imgSrc, text, isCurrentUser }: { imgSrc: string, text:
             )}>
                 <ClickableImage imgSrc={imgSrc} onClick={() => setIsLightboxOpen(true)} />
                 <div className="px-4 py-2.5">
-                    <span className="text-white text-[15px] leading-relaxed break-words">{text}</span>
+                    <span className="text-white text-[15px] leading-relaxed break-words">
+                        <HighlightedText text={text} matchIndices={matchIndices} />
+                    </span>
                 </div>
             </div>
             <ImageLightbox 
@@ -329,7 +395,12 @@ const ClickableImage = ({ imgSrc, onClick, rounded = false }: { imgSrc: string, 
     )
 }
 
-const MessageParagraph = ({ text, username, isCurrentUser }: { text: string, username?: string, isCurrentUser: boolean }) => {
+const MessageParagraph = ({ text, username, isCurrentUser, matchIndices }: { 
+    text: string, 
+    username?: string, 
+    isCurrentUser: boolean,
+    matchIndices?: [number, number][] | null
+}) => {
     const { isGlobalChat, isGroupChat } = useChatStore();
 
     return (
@@ -342,7 +413,9 @@ const MessageParagraph = ({ text, username, isCurrentUser }: { text: string, use
             {(isGlobalChat || isGroupChat) && !isCurrentUser && (
                 <span className="text-xs text-blue-400 font-semibold">{username}</span>
             )}
-            <span className="text-[15px] leading-relaxed">{text}</span>
+            <span className="text-[15px] leading-relaxed">
+                <HighlightedText text={text} matchIndices={matchIndices} />
+            </span>
         </p>
     )
 }

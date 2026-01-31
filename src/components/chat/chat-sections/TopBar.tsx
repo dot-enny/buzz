@@ -1,9 +1,14 @@
-import { ChevronDoubleLeftIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
+import { ChevronDoubleLeftIcon, InformationCircleIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useChatStore } from "../../../lib/chatStore";
 import { useAppStateStore } from "../../../lib/appStateStore";
 import { Avatar, GroupAvatar } from "../../ui/Avatar";
+import Tooltip from "../../ui/Tooltip";
 
-export const TopBar = () => {
+interface TopBarProps {
+  onSearchClick?: () => void;
+}
+
+export const TopBar = ({ onSearchClick }: TopBarProps) => {
 
   const { setIsChatOpen, isChatDetailOpen, setIsChatDetailOpen } = useAppStateStore()
   const { user, isCurrentUserBlocked, isReceiverBlocked, isGlobalChat, isGroupChat, groupData } = useChatStore();
@@ -38,12 +43,22 @@ export const TopBar = () => {
           </p>
         </div>
       </div>
-      <div className="actions flex gap-5">
-        <button onClick={() => setIsChatDetailOpen(!isChatDetailOpen)}>
-          <InformationCircleIcon className="text-white size-6 xl:hidden" />
+      <div className="actions flex gap-3">
+        {/* Search button */}
+        <Tooltip tip="Search messages" className="-left-12">
+          <button 
+            onClick={onSearchClick}
+            className="p-2 rounded-lg hover:bg-neutral-800 transition-colors"
+          >
+            <MagnifyingGlassIcon className="text-neutral-400 hover:text-white size-5 transition-colors" />
+          </button>
+        </Tooltip>
+        
+        <button onClick={() => setIsChatDetailOpen(!isChatDetailOpen)} className="p-2 rounded-lg hover:bg-neutral-800 transition-colors xl:hidden">
+          <InformationCircleIcon className="text-neutral-400 hover:text-white size-5 transition-colors" />
         </button>
-        <button>
-          <ChevronDoubleLeftIcon className="text-white size-6 md:hidden" onClick={() => setIsChatOpen(false)} />
+        <button className="p-2 rounded-lg hover:bg-neutral-800 transition-colors md:hidden" onClick={() => setIsChatOpen(false)}>
+          <ChevronDoubleLeftIcon className="text-neutral-400 hover:text-white size-5 transition-colors" />
         </button>
       </div>
     </div>
