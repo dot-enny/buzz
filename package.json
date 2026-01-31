@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:analyze": "tsc && vite build && start dist/stats.html",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "prune-branches": "git fetch --prune && powershell -Command \"$goneBranches = git branch -vv | Select-String ': gone]' | ForEach-Object { if ($_.Line -match '^\\\\s*(\\\\S+)') { $matches[1] } }; foreach ($branch in $goneBranches) { git branch -D $branch }\""
@@ -22,9 +23,11 @@
     "react-router-dom": "^6.23.0",
     "react-toastify": "^10.0.5",
     "timeago.js": "^4.0.2",
+    "yet-another-react-lightbox": "^3.28.0",
     "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {
+    "@tanstack/react-virtual": "^3.13.18",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
@@ -35,6 +38,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "postcss": "^8.4.38",
+    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"

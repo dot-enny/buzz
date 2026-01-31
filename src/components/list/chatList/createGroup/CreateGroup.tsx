@@ -17,6 +17,7 @@ interface CreateGroupProps {
 export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
   const { currentUser } = useUserStore()
   const [groupName, setGroupName] = useState('')
+  const [groupDescription, setGroupDescription] = useState('')
   const [groupPhoto, setGroupPhoto] = useState<{ file: File | null; url: string }>({
     file: null,
     url: '',
@@ -67,11 +68,6 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
   }
 
   const handleCreateGroup = async () => {
-    if (!groupName.trim()) {
-      toast.error('Please enter a group name')
-      return
-    }
-
     if (selectedUsers.length === 0) {
       toast.error('Please select at least one member')
       return
@@ -90,11 +86,22 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
       const chatId = `group_${Date.now()}_${currentUser.id}`
       const chatRef = doc(db, 'chats', chatId)
       
+      // Generate group name if not provided - list of first 3 members
+      let finalGroupName = groupName.trim();
+      if (!finalGroupName) {
+        const memberNames = allUsers
+          .filter(u => selectedUsers.includes(u.id))
+          .slice(0, 3)
+          .map(u => u.username);
+        finalGroupName = memberNames.join(', ') + (selectedUsers.length > 3 ? '...' : '');
+      }
+      
       await setDoc(chatRef, {
         createdAt: new Date(),
         createdBy: currentUser.id,
         type: 'group',
-        groupName: groupName.trim(),
+        groupName: finalGroupName,
+        ...(groupDescription.trim() && { groupDescription: groupDescription.trim() }),
         ...(groupPhotoURL && { groupPhotoURL }),
       })
 
@@ -109,7 +116,8 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
         const newChatEntry: UserChat = {
           chatId,
           type: 'group',
-          groupName: groupName.trim(),
+          groupName: finalGroupName,
+          ...(groupDescription.trim() && { groupDescription: groupDescription.trim() }),
           ...(groupPhotoURL && { groupPhotoURL }),
           participants,
           admins: [currentUser.id], // Creator is admin
@@ -136,6 +144,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
       
       // Reset form
       setGroupName('')
+      setGroupDescription('')
       setGroupPhoto({ file: null, url: '' })
       setSelectedUsers([])
       setIsOpen(false)
@@ -217,10 +226,19 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
                   {/* Group Name */}
                   <input
                     type="text"
-                    placeholder="Group name"
+                    placeholder="Group name (optional)"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
-                    className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg outline-none focus:border-blue-500 transition-colors mb-3"
+                  />
+                  
+                  {/* Group Description */}
+                  <textarea
+                    placeholder="Group description (optional)"
+                    value={groupDescription}
+                    onChange={(e) => setGroupDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg outline-none focus:border-blue-500 transition-colors resize-none"
                   />
                 </div>
 
@@ -277,7 +295,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
                 <div className="p-6 border-t border-neutral-800">
                   <button
                     onClick={handleCreateGroup}
-                    disabled={isCreating || !groupName.trim() || selectedUsers.length === 0}
+                    disabled={isCreating || selectedUsers.length === 0}
                     className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-800 disabled:text-neutral-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
                   >
                     {isCreating ? 'Creating...' : 'Create Group'}

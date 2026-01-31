@@ -45,16 +45,26 @@ export function isSameDay(date1: Date, date2: Date): boolean {
  * Groups messages by date, returning an array of { date: string, messages: Message[] }
  */
 export function groupMessagesByDate(messages: any[]): Array<{ date: string; messages: any[] }> {
+  if (!messages || messages.length === 0) return [];
+  
   const groups: { [key: string]: any[] } = {};
 
   messages.forEach((message) => {
-    const messageDate = message.createdAt.toDate();
-    const dateLabel = getDateLabel(messageDate);
+    try {
+      const messageDate = message.createdAt?.toDate?.() || new Date();
+      const dateLabel = getDateLabel(messageDate);
 
-    if (!groups[dateLabel]) {
-      groups[dateLabel] = [];
+      if (!groups[dateLabel]) {
+        groups[dateLabel] = [];
+      }
+      groups[dateLabel].push(message);
+    } catch (err) {
+      // If date parsing fails, group under "Unknown"
+      if (!groups['Unknown']) {
+        groups['Unknown'] = [];
+      }
+      groups['Unknown'].push(message);
     }
-    groups[dateLabel].push(message);
   });
 
   // Convert to array format

@@ -16,6 +16,7 @@ interface UserChat {
     unreadCount?: number, // NEW: count of unread messages
     type: 'private' | 'group' | 'global',
     groupName?: string, // for group chats
+    groupDescription?: string, // for group chats
     groupPhotoURL?: string, // for group chats
     participants?: string[], // NEW: array of participant user IDs for group chats
     admins?: string[], // NEW: array of admin user IDs for group chats
@@ -34,6 +35,8 @@ interface Message {
         toDate: () => Date;
     };
     readBy?: string[]; // NEW: array of user IDs who have read this message
+    status?: 'sending' | 'sent' | 'failed'; // Optimistic UI status
+    tempId?: string; // Temporary ID for optimistic updates
 }
 
 interface Avatar {
