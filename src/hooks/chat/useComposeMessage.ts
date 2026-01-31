@@ -250,6 +250,67 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
         });
     };
 
+    // Handle GIF selection - send GIF as image message
+    const handleGifSelect = async (gifUrl: string) => {
+        if (!gifUrl) return;
+
+        // Create optimistic message with GIF
+        let tempId: string | undefined;
+        if (callbacks?.addOptimisticMessage) {
+            const optimisticMessage = {
+                senderId: currentUser.id,
+                senderAvatar: currentUser.avatar,
+                senderUsername: currentUser.username,
+                text: '',
+                img: gifUrl,
+            };
+            tempId = callbacks.addOptimisticMessage(optimisticMessage);
+        }
+
+        try {
+            // Determine the actual chat ID
+            let actualChatId = chatId;
+
+            // If this is a temporary chat, create a real one first
+            if (isTempChat(chatId)) {
+                actualChatId = await createAndPersistChat();
+                // Update the chat store with the new real chat ID
+                changeChat(actualChatId, user);
+            }
+
+            if (!actualChatId) return;
+
+            // Create the message
+            const messagesRef = collection(db, "chats", actualChatId, "messages");
+            const newMessageRef = doc(messagesRef);
+            
+            await setDoc(newMessageRef, {
+                senderId: currentUser.id,
+                senderAvatar: currentUser.avatar,
+                senderUsername: currentUser.username,
+                text: '',
+                img: gifUrl,
+                createdAt: serverTimestamp(),
+                readBy: []
+            });
+
+            // Mark as sent
+            if (callbacks?.markMessageSent && tempId) {
+                callbacks.markMessageSent(tempId);
+            }
+
+            // Update userchats with last message (for 1-on-1 chats)
+            if (!useChatStore.getState().isGroupChat && !useChatStore.getState().isGlobalChat) {
+                await updateUserChats(true, 'GIF', actualChatId);
+            }
+        } catch (err) {
+            console.error('Error sending GIF:', err);
+            if (callbacks?.markMessageFailed && tempId) {
+                callbacks.markMessageFailed(tempId);
+            }
+        }
+    };
+
     const resetInput = () => {
         setText("");
         setImg({
@@ -258,5 +319,5 @@ export const useComposeMessage = (callbacks?: OptimisticCallbacks) => {
         });
     };
 
-    return { handleImgSelect, img, setImg, handleSendText, text, setText, openEmoji, setOpenEmoji, handleEmoji };
+    return { handleImgSelect, img, setImg, handleSendText, text, setText, openEmoji, setOpenEmoji, handleEmoji, handleGifSelect };
 };

@@ -1,11 +1,13 @@
 import EmojiPicker from "emoji-picker-react";
 import { useChatStore } from "../../../lib/chatStore";
 import { useComposeMessage, OptimisticCallbacks } from "../../../hooks/chat/useComposeMessage";
-import { FaceSmileIcon, PaperAirplaneIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { FaceSmileIcon, PaperAirplaneIcon, PhotoIcon, GifIcon } from "@heroicons/react/24/outline";
 import { AutoExpandingTextarea } from "../../ui/AutoExpandingTextarea";
 import { useRef, useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
+import { GiphyPicker } from "./GiphyPicker";
+import { GiphyGif } from "../../../hooks/chat/useGiphy";
 
 interface MentionUser {
     id: string;
@@ -30,15 +32,23 @@ interface SendButtonProps {
     isBlocked: boolean;
 }
 
+interface GifButtonProps {
+    isOpen: boolean;
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    onSelect: (gif: GiphyGif) => void;
+    isBlocked: boolean;
+}
+
 interface ComposeMessageProps {
     optimisticCallbacks?: OptimisticCallbacks;
 }
 
 export const ComposeMessage = ({ optimisticCallbacks }: ComposeMessageProps) => {
     const { isCurrentUserBlocked, isReceiverBlocked, isGlobalChat, isGroupChat, groupData } = useChatStore();
-    const { handleImgSelect, img, setImg, handleEmoji, handleSendText, text, setText, openEmoji, setOpenEmoji } = useComposeMessage(optimisticCallbacks);
+    const { handleImgSelect, img, setImg, handleEmoji, handleSendText, text, setText, openEmoji, setOpenEmoji, handleGifSelect } = useComposeMessage(optimisticCallbacks);
     const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
     const [participants, setParticipants] = useState<MentionUser[]>([]);
+    const [isGiphyOpen, setIsGiphyOpen] = useState(false);
 
     // Fetch participant details for mentions (only for group/global chats)
     useEffect(() => {
@@ -77,11 +87,18 @@ export const ComposeMessage = ({ optimisticCallbacks }: ComposeMessageProps) => 
     // Only enable mentions for group/global chats
     const mentionParticipants = (isGlobalChat || isGroupChat) ? participants : undefined;
 
+    // Handle GIF selection
+    const onGifSelect = (gif: GiphyGif) => {
+        handleGifSelect(gif.url);
+        setIsGiphyOpen(false);
+    };
+
     return (
-        <div className="mt-auto flex justify-between items-center sm:gap-5 p-5 border-t border-neutral-800">
+        <div className="mt-auto flex justify-between items-center sm:gap-5 p-5 border-t border-neutral-800 relative">
             <div className="icons flex gap-2 sm:gap-5">
                 <FileInput handleImgSelect={handleImgSelect} isBlocked={isBlocked} />
                 <EmojiPickerComponent openEmoji={openEmoji} setOpenEmoji={setOpenEmoji} handleEmoji={handleEmoji} isBlocked={isBlocked} />
+                <GifButton isOpen={isGiphyOpen} setIsOpen={setIsGiphyOpen} onSelect={onGifSelect} isBlocked={isBlocked} />
             </div>
             <AutoExpandingTextarea 
                 text={text} 
@@ -135,4 +152,21 @@ const SendButton = ({ handleSendText, isBlocked }: SendButtonProps) => (
     >
         <PaperAirplaneIcon className="text-white size-5" />
     </button>
+);
+
+const GifButton = ({ isOpen, setIsOpen, onSelect, isBlocked }: GifButtonProps) => (
+    <div className="relative flex items-center">
+        <button 
+            onClick={() => setIsOpen(prev => !prev)} 
+            disabled={isBlocked} 
+            className="disabled:cursor-not-allowed"
+        >
+            <GifIcon className="text-white size-5" />
+        </button>
+        <GiphyPicker 
+            isOpen={isOpen} 
+            onClose={() => setIsOpen(false)} 
+            onSelect={onSelect} 
+        />
+    </div>
 );
