@@ -42,14 +42,29 @@ interface GifButtonProps {
 
 interface ComposeMessageProps {
     optimisticCallbacks?: OptimisticCallbacks;
+    onTyping?: () => void;
+    onStopTyping?: () => void;
 }
 
-export const ComposeMessage = ({ optimisticCallbacks }: ComposeMessageProps) => {
+export const ComposeMessage = ({ optimisticCallbacks, onTyping, onStopTyping }: ComposeMessageProps) => {
     const { isCurrentUserBlocked, isReceiverBlocked, isGlobalChat, isGroupChat, groupData } = useChatStore();
     const { handleImgSelect, img, setImg, handleEmoji, handleSendText, text, setText, openEmoji, setOpenEmoji, handleGifSelect } = useComposeMessage(optimisticCallbacks);
     const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
     const [participants, setParticipants] = useState<MentionUser[]>([]);
     const [isGiphyOpen, setIsGiphyOpen] = useState(false);
+
+    // Trigger typing indicator when text changes
+    useEffect(() => {
+        if (text.trim() && onTyping) {
+            onTyping();
+        }
+    }, [text, onTyping]);
+
+    // Clear typing when message is sent
+    const handleSend = () => {
+        if (onStopTyping) onStopTyping();
+        handleSendText();
+    };
 
     // Fetch participant details for mentions (only for group/global chats)
     useEffect(() => {
@@ -128,13 +143,13 @@ export const ComposeMessage = ({ optimisticCallbacks }: ComposeMessageProps) => 
                 <AutoExpandingTextarea 
                     text={text} 
                     setText={setText} 
-                    handleSendText={handleSendText} 
+                    handleSendText={handleSend} 
                     isBlocked={isBlocked} 
                     img={img.url} 
                     removeImg={setImg}
                     participants={mentionParticipants}
                 />
-                <SendButton handleSendText={handleSendText} isBlocked={isBlocked} />
+                <SendButton handleSendText={handleSend} isBlocked={isBlocked} />
             </div>
         </div>
     );

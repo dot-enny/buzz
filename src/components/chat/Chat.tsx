@@ -6,12 +6,18 @@ import { useMarkMessagesAsRead } from "../../hooks/chat/useMarkMessagesAsRead"
 import { useUpdateMessages } from "../../hooks/chat/useUpdateMessages"
 import { useMessageSearch } from "../../hooks/chat/useMessageSearch"
 import { ChatSearchBar } from "./chat-sections/ChatSearchBar"
+import { useTypingIndicator } from "../../hooks/chat/useTypingIndicator"
+import { TypingIndicator } from "../ui/TypingIndicator"
+import { AnimatePresence } from "framer-motion"
 
 export const Chat = () => {
   const { chatId } = useChatStore();
   
   // Get messages and optimistic update callbacks
   const { messages, endRef, addOptimisticMessage, markMessageFailed, markMessageSent } = useUpdateMessages();
+  
+  // Typing indicator
+  const { typingUsers, setTyping, clearTyping } = useTypingIndicator();
   
   // Message search
   const {
@@ -35,7 +41,10 @@ export const Chat = () => {
     <div className="h-[100svh] flex flex-col flex-[2] border-l border-r border-neutral-800 relative">
       {chatId  ? (
         <>
-          <TopBar onSearchClick={openSearch} />
+          <TopBar 
+            onSearchClick={openSearch} 
+            typingUsernames={typingUsers.map(u => u.username)}
+          />
           <ChatSearchBar
             isOpen={isSearchOpen}
             searchQuery={searchQuery}
@@ -52,12 +61,22 @@ export const Chat = () => {
             activeSearchResultId={activeResult?.message.id}
             getMatchIndices={getMatchIndices}
           />
+          
+          {/* Typing indicator above compose */}
+          <AnimatePresence>
+            {typingUsers.length > 0 && (
+              <TypingIndicator usernames={typingUsers.map(u => u.username)} />
+            )}
+          </AnimatePresence>
+          
           <ComposeMessage 
             optimisticCallbacks={{ 
               addOptimisticMessage, 
               markMessageFailed, 
               markMessageSent 
-            }} 
+            }}
+            onTyping={setTyping}
+            onStopTyping={clearTyping}
           />
         </>
       ) : (

@@ -10,6 +10,8 @@ import { useGlobalChatLastMessage } from "../../../hooks/useGlobalChatLastMessag
 import { UserInfo } from "../userInfo/UserInfo";
 import { useState } from "react";
 import { Avatar, GroupAvatar } from "../../ui/Avatar";
+import { useChatTypingStatus } from "../../../hooks/chat/useTypingIndicator";
+import { GLOBAL_CHAT_ID } from "../../../hooks/useSignup";
 
 export const ChatList = () => {
 
@@ -56,6 +58,7 @@ export const ChatList = () => {
 const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any) => void, isLoading: boolean }) => {
     const { currentUser } = useUserStore();
     const { isCurrentUserBlocked, isReceiverBlocked } = useChatStore();
+    const { isTyping, typingText } = useChatTypingStatus(chat.chatId);
     const unreadCount = chat.unreadCount || 0;
     
     // Check if it's a group chat
@@ -92,7 +95,11 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
                 {!isLoading ?
                     (<>
                         <h2 className="truncate">{sender.username}</h2>
-                        <p className="text-neutral-500 truncate">{lastMessagePreview}</p>
+                        {isTyping ? (
+                            <p className="text-blue-400 text-sm italic truncate">{typingText}</p>
+                        ) : (
+                            <p className="text-neutral-500 truncate">{lastMessagePreview}</p>
+                        )}
                     </>) : (
                         <div className="opacity-50">
                             <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
@@ -112,6 +119,7 @@ const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any
 }
 
 const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any) => void, isLoading: boolean }) => {
+    const { isTyping, typingText } = useChatTypingStatus(chat.chatId);
     const lastMessagePreview = chat.lastMessage;
     const unreadCount = chat.unreadCount || 0;
     const groupName = chat.groupName || 'Unnamed Group';
@@ -143,7 +151,11 @@ const GroupChatItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat
                 {!isLoading ? (
                     <>
                         <h2 className="truncate">{groupName}</h2>
-                        <p className="text-neutral-500 truncate">{lastMessagePreview || 'No messages yet'}</p>
+                        {isTyping ? (
+                            <p className="text-blue-400 text-sm italic truncate">{typingText}</p>
+                        ) : (
+                            <p className="text-neutral-500 truncate">{lastMessagePreview || 'No messages yet'}</p>
+                        )}
                     </>
                 ) : (
                     <div className="opacity-50">
@@ -171,6 +183,7 @@ interface GlobalChatProps {
 const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
 
     const { isLoading, lastMessage } = useGlobalChatLastMessage();
+    const { isTyping, typingText } = useChatTypingStatus(GLOBAL_CHAT_ID);
     const unreadCount = chat?.unreadCount || 0;
     
     // Only show unread highlight if there's actually an unread message
@@ -195,7 +208,11 @@ const GlobalChatItem = ({ chat, onClick }: GlobalChatProps) => {
             {!isLoading ?
                 (<>
                     <h2 className="truncate">Global Buzz</h2>
-                    <p className="text-neutral-500 truncate">{lastMessage?.senderUsername}: {lastMessage?.text ?? 'Welcome to buzz global chat'}</p>
+                    {isTyping ? (
+                        <p className="text-blue-400 text-sm italic truncate">{typingText}</p>
+                    ) : (
+                        <p className="text-neutral-500 truncate">{lastMessage?.senderUsername}: {lastMessage?.text ?? 'Welcome to buzz global chat'}</p>
+                    )}
                 </>) : (
                     <div className="opacity-50">
                         <div className="w-[90px] h-4 bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 animate-pulse my-2 rounded-full" />
