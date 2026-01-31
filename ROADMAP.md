@@ -47,8 +47,8 @@ Prove understanding of performance and complex data synchronization.
 | Feature | Priority | Status | Complexity |
 |---------|----------|--------|------------|
 | **Optimistic UI Updates** | High | ✅ DONE | Hard |
-| **Message Search** | High | ⬜ TODO | Medium |
-| **@Mentions** | Medium | ⬜ TODO | Medium |
+| **Message Search** | High | ✅ DONE | Medium |
+| **@Mentions** | Medium | ✅ DONE | Medium |
 
 #### 2.1 Optimistic UI Updates
 - [x] Update message state structure (add `status: 'sending' | 'sent' | 'failed'`)
@@ -59,17 +59,17 @@ Prove understanding of performance and complex data synchronization.
 - [ ] Handle offline scenarios
 
 #### 2.2 Message Search
-- [ ] Add search bar in chat header
-- [ ] Client-side search through loaded messages
-- [ ] Highlight matching text in messages
-- [ ] Scroll to message on click
+- [x] Add search bar in chat header
+- [x] Client-side search through loaded messages
+- [x] Highlight matching text in messages
+- [x] Scroll to message on click
 - [ ] Search across all chats option
 - [ ] Consider Algolia/Typesense for full-text search (optional)
 
 #### 2.3 @Mentions in Group Chats
-- [ ] Detect @username pattern in compose input
-- [ ] Show autocomplete dropdown of group members
-- [ ] Highlight mentions in message bubbles
+- [x] Detect @username pattern in compose input
+- [x] Show autocomplete dropdown of group members
+- [x] Highlight mentions in message bubbles
 - [ ] Notify mentioned users (separate notification)
 - [ ] "Mentions" filter in chat list
 
@@ -118,8 +118,8 @@ Demonstrate security awareness for fintech/enterprise roles.
 
 ### Phase 2: Impressive Features (2-3 days)
 3. ⬜ Rich Link Previews - wow factor
-4. ⬜ Message Search - utility feature
-5. ⬜ @Mentions - group chat enhancement
+4. ✅ Message Search - utility feature
+5. ✅ @Mentions - group chat enhancement
 
 ### Phase 3: Advanced Features (2-3 days)
 6. ⬜ Giphy Integration - fun & API skills
