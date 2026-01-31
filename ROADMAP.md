@@ -13,8 +13,8 @@ Make messages interactive and visually impressive.
 | Feature | Priority | Status | Complexity |
 |---------|----------|--------|------------|
 | **Image Lightbox** | High | ✅ DONE | Medium |
-| **Rich Link Previews** | High | ⬜ TODO | Hard |
-| **Giphy Integration** | Medium | ⬜ TODO | Medium |
+| **Rich Link Previews** | High | ✅ DONE | Hard |
+| **Giphy Integration** | Medium | ✅ DONE | Medium |
 
 #### 1.1 Image Lightbox
 - [x] Install lightbox library (yet-another-react-lightbox)
@@ -24,20 +24,20 @@ Make messages interactive and visually impressive.
 - [x] Keyboard navigation (arrow keys, ESC to close)
 
 #### 1.2 Rich Link Previews
-- [ ] URL detection in messages (regex pattern)
-- [ ] Create LinkPreview component
-- [ ] Set up link preview API (linkpreview.io or custom Cloud Function)
-- [ ] Cache link previews to avoid repeated API calls
-- [ ] Handle YouTube, GitHub, Twitter special cases
-- [ ] Graceful fallback for failed previews
+- [x] URL detection in messages (regex pattern)
+- [x] Create LinkPreview component
+- [x] Set up link preview API (jsonlink.io - free, no key)
+- [x] Cache link previews to avoid repeated API calls
+- [x] Handle YouTube, GitHub special cases
+- [x] Graceful fallback for failed previews
 
 #### 1.3 Giphy Integration
-- [ ] Sign up for Giphy API key
-- [ ] Create GiphyPicker component
-- [ ] Add GIF button in compose area
-- [ ] Implement search with debouncing
-- [ ] Trending GIFs as default
-- [ ] Send GIF as message (store as img)
+- [x] Sign up for Giphy API key
+- [x] Create GiphyPicker component
+- [x] Add GIF button in compose area
+- [x] Implement search with debouncing
+- [x] Trending GIFs as default
+- [x] Send GIF as message (store as img)
 
 ---
 
