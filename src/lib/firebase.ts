@@ -6,9 +6,12 @@ import { getStorage } from "firebase/storage"
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
+const configuredApiKey = import.meta.env.VITE_API_KEY?.trim();
+export const isFirebaseConfigured = Boolean(configuredApiKey && configuredApiKey !== "your_firebase_api_key");
+
+// Keep Firebase imports safe during local setup; ProtectedRoute prevents requests until configured.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_API_KEY,
+  apiKey: configuredApiKey || "dev-placeholder-api-key",
   authDomain: "react-chat-app-72301.firebaseapp.com",
   projectId: "react-chat-app-72301",
   storageBucket: "react-chat-app-72301.appspot.com",
