@@ -1,6 +1,7 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth, db } from "../lib/firebase";
 import { upload } from "../lib/upload";
@@ -13,6 +14,7 @@ export const useSignup = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const { avatar, selectAvatar } = useSelectAvatar();
+    const navigate = useNavigate();
 
     const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -42,7 +44,8 @@ export const useSignup = () => {
                 }]
             });
 
-            toast.success("Account created successfully! You can now login!");
+            toast.success("Account created successfully! You are now signed in.");
+            navigate('/');
         } catch (err: any) {
             console.error("Sign-up failed:", err);
             toast.error(getFirebaseErrorMessage(err, "We couldn't create your account. Please try again."));
