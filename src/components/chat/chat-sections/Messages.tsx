@@ -47,16 +47,32 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
     const { isGlobalChat, isGroupChat } = useChatStore();
     const messagesToAnimate = 5; // Number of messages to animate
     const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     // Group messages by date
     const groupedMessages = messages ? groupMessagesByDate(messages) : [];
 
     // Scroll to active search result
     useEffect(() => {
-        if (activeSearchResultId && messageRefs.current.has(activeSearchResultId)) {
+        if (!activeSearchResultId) return;
+
+        const frame = requestAnimationFrame(() => {
+            const container = messagesContainerRef.current;
             const element = messageRefs.current.get(activeSearchResultId);
-            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+            if (!container || !element) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const elementRect = element.getBoundingClientRect();
+            const elementOffset = elementRect.top - containerRect.top;
+            const centeredOffset = elementOffset - (container.clientHeight - elementRect.height) / 2;
+
+            container.scrollTo({
+                top: container.scrollTop + centeredOffset,
+                behavior: 'smooth',
+            });
+        });
+
+        return () => cancelAnimationFrame(frame);
     }, [activeSearchResultId]);
 
     // Store ref for a message
@@ -69,7 +85,7 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
     };
 
     return (
-        <div className="center flex-1 p-5 pt-0 overflow-y-auto overflow-x-hidden overscroll-contain flex flex-col gap-5 relative">
+        <div ref={messagesContainerRef} className="center flex-1 p-5 pt-0 overflow-y-auto overflow-x-hidden overscroll-contain flex flex-col gap-5 relative">
             {messages ? (
                 <>
                     {messages.length === 0 ? (
