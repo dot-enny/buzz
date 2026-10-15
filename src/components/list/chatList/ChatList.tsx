@@ -1,6 +1,6 @@
 import { IconSearch } from "../../icons/IconSearch"
 import { useUserStore } from "../../../lib/userStore";
-import { UserPlusIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { UserPlusIcon, UserGroupIcon, ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import AddUser from "./addUser/AddUser";
 import CreateGroup from "./createGroup/CreateGroup";
 import { useChatList } from "../../../hooks/useChatList";
@@ -17,7 +17,7 @@ import { ChatListSkeleton } from "../../ui/Skeleton";
 
 export const ChatList = () => {
 
-    const { setInput, filteredChats, globalChat, handleSelectChat } = useChatList();
+    const { setInput, filteredChats, globalChat, hasPersonalChats, handleSelectChat } = useChatList();
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
     
@@ -43,6 +43,12 @@ export const ChatList = () => {
             </div>
             <div className="overflow-hidden">
                 <GlobalChatItem chat={globalChat} onClick={handleChatClick} />
+                {!hasPersonalChats && (
+                    <WelcomeGuide
+                        onNewMessage={() => setIsAddUserOpen(true)}
+                        onCreateGroup={() => setIsCreateGroupOpen(true)}
+                    />
+                )}
                 <AnimatePresence mode="popLayout">
                     {filteredChats ? (
                         filteredChats.map((chat, index) => (
@@ -72,6 +78,49 @@ export const ChatList = () => {
         </div>
     )
 }
+
+const WelcomeGuide = ({
+    onNewMessage,
+    onCreateGroup,
+}: {
+    onNewMessage: () => void;
+    onCreateGroup: () => void;
+}) => (
+    <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="m-4 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4"
+        aria-labelledby="welcome-guide-title"
+    >
+        <div className="flex items-start gap-3">
+            <ChatBubbleLeftRightIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-300" aria-hidden="true" />
+            <div className="min-w-0">
+                <h2 id="welcome-guide-title" className="text-sm font-semibold text-blue-50">Welcome to Buzz</h2>
+                <p className="mt-1 text-xs leading-5 text-blue-100/70">
+                    Global Buzz is ready. Start a private chat or bring people together in a group.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={onNewMessage}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-500"
+                    >
+                        <UserPlusIcon className="h-4 w-4" aria-hidden="true" />
+                        New message
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onCreateGroup}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-blue-300/20 px-3 py-2 text-xs font-medium text-blue-100 transition-colors hover:bg-blue-400/10"
+                    >
+                        <UserGroupIcon className="h-4 w-4" aria-hidden="true" />
+                        Create group
+                    </button>
+                </div>
+            </div>
+        </div>
+    </motion.section>
+);
 
 
 const ListItem = ({ chat, onClick, isLoading }: { chat: any, onClick: (chat: any) => void, isLoading: boolean }) => {
