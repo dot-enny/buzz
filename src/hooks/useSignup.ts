@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { auth, db } from "../lib/firebase";
 import { upload } from "../lib/upload";
 import { useSelectAvatar } from "./useSelectAvatar";
+import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
 export const GLOBAL_CHAT_ID = "buzz_global_general_channel";
 
@@ -43,7 +44,8 @@ export const useSignup = () => {
 
             toast.success("Account created successfully! You can now login!");
         } catch (err: any) {
-            toast.error(err.message)
+            console.error("Sign-up failed:", err);
+            toast.error(getFirebaseErrorMessage(err, "We couldn't create your account. Please try again."));
         } finally {
             setIsLoading(false);
         }

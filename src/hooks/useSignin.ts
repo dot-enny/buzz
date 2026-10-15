@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth } from "../lib/firebase";
 import { useCheckGlobalChat } from "./useCheckGlobalChat";
+import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
 export const useSignin = () => {
     const { initializeUserChatsForGlobal } = useCheckGlobalChat();
@@ -22,7 +23,8 @@ export const useSignin = () => {
             await initializeUserChatsForGlobal(res.user.uid);
             navigate('/')
         } catch (err: any) {
-            toast.error(err.message);
+            console.error("Sign-in failed:", err);
+            toast.error(getFirebaseErrorMessage(err, "We couldn't sign you in. Please try again."));
         } finally {
             setIsLoading(false);
         }

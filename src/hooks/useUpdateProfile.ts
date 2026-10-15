@@ -4,6 +4,7 @@ import { db } from "../lib/firebase";
 import { upload } from "../lib/upload";
 import { useState } from "react";
 import { useUserStore } from "../lib/userStore";
+import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
 export const useUpdateProfile = () => {
 
@@ -31,8 +32,8 @@ export const useUpdateProfile = () => {
 
             toast.success("Profile updated successfully!");
         } catch (err: any) {
-            toast.error(err.message)
-            console.error(err)
+            console.error("Profile update failed:", err);
+            toast.error(getFirebaseErrorMessage(err, "We couldn't update your profile. Please try again."));
         } finally {
             setIsLoading(false);
         }
