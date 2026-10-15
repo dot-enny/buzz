@@ -8,7 +8,8 @@ export default defineConfig({
     react(),
     // Bundle analyzer - generates stats.html after build
     visualizer({
-      filename: 'dist/stats.html',
+      template: 'list',
+      filename: 'dist/stats.yml',
       open: false,
       gzipSize: true,
       brotliSize: true,
