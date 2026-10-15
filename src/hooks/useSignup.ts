@@ -22,7 +22,7 @@ export const useSignup = () => {
 
         try {
             const res = await createUserWithEmailAndPassword(auth, email as string, password as string);
-            const imgUrl = await upload(avatar.file as unknown as File);
+            const imgUrl = avatar.file ? await upload(avatar.file as File) : "";
 
             await setDoc(doc(db, "users", res.user.uid), {
                 username,
