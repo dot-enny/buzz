@@ -1,10 +1,12 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth, db } from "../lib/firebase";
 import { upload } from "../lib/upload";
 import { useSelectAvatar } from "./useSelectAvatar";
+import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
 export const GLOBAL_CHAT_ID = "buzz_global_general_channel";
 
@@ -12,6 +14,7 @@ export const useSignup = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const { avatar, selectAvatar } = useSelectAvatar();
+    const navigate = useNavigate();
 
     const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -21,7 +24,7 @@ export const useSignup = () => {
 
         try {
             const res = await createUserWithEmailAndPassword(auth, email as string, password as string);
-            const imgUrl = await upload(avatar.file as unknown as File);
+            const imgUrl = avatar.file ? await upload(avatar.file as File) : "";
 
             await setDoc(doc(db, "users", res.user.uid), {
                 username,
@@ -41,9 +44,11 @@ export const useSignup = () => {
                 }]
             });
 
-            toast.success("Account created successfully! You can now login!");
+            toast.success("Account created successfully! You are now signed in.");
+            navigate('/');
         } catch (err: any) {
-            toast.error(err.message)
+            console.error("Sign-up failed:", err);
+            toast.error(getFirebaseErrorMessage(err, "We couldn't create your account. Please try again."));
         } finally {
             setIsLoading(false);
         }

@@ -29,6 +29,7 @@ export const useChatList = () => {
     });
     
     const globalChat = chats.filter((chat => chat.chatType === 'global'))[0];
+    const hasPersonalChats = chats.some((chat) => chat.chatType !== 'global');
 
     // useEffect(() => {
     //     console.log('globalChat', globalChat)
@@ -127,6 +128,7 @@ export const useChatList = () => {
         setInput,
         filteredChats,
         globalChat,
+        hasPersonalChats,
         handleSelectChat,
     }
 }

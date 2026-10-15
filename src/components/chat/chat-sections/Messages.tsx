@@ -47,16 +47,32 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
     const { isGlobalChat, isGroupChat } = useChatStore();
     const messagesToAnimate = 5; // Number of messages to animate
     const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     // Group messages by date
     const groupedMessages = messages ? groupMessagesByDate(messages) : [];
 
     // Scroll to active search result
     useEffect(() => {
-        if (activeSearchResultId && messageRefs.current.has(activeSearchResultId)) {
+        if (!activeSearchResultId) return;
+
+        const frame = requestAnimationFrame(() => {
+            const container = messagesContainerRef.current;
             const element = messageRefs.current.get(activeSearchResultId);
-            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+            if (!container || !element) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const elementRect = element.getBoundingClientRect();
+            const elementOffset = elementRect.top - containerRect.top;
+            const centeredOffset = elementOffset - (container.clientHeight - elementRect.height) / 2;
+
+            container.scrollTo({
+                top: container.scrollTop + centeredOffset,
+                behavior: 'smooth',
+            });
+        });
+
+        return () => cancelAnimationFrame(frame);
     }, [activeSearchResultId]);
 
     // Store ref for a message
@@ -69,20 +85,22 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
     };
 
     return (
-        <div className="center flex-1 p-5 pt-0 overflow-scroll flex flex-col gap-5 relative">
+        <div ref={messagesContainerRef} className="center flex-1 p-5 pt-0 overflow-y-auto overflow-x-hidden overscroll-contain flex flex-col gap-5 relative">
             {messages ? (
                 <>
                     {messages.length === 0 ? (
                         <EmptyState isGlobalChat={isGlobalChat} isGroupChat={isGroupChat} />
                     ) : (
                         groupedMessages.map((group: { date: string; messages: any[] }) => (
-                            <div key={group.date} className="flex flex-col gap-5">
+                            <div key={group.date} className="flex flex-col gap-3">
                                 {/* Sticky Date Separator */}
                                 <StickyDateSeparator date={group.date} />
 
                                 {/* Messages for this date */}
-                                {group.messages.map((message: MessageProps) => {
+                                {group.messages.map((message: MessageProps, messageIndex: number) => {
                                     const globalIndex = messages.findIndex((m: any) => m.id === message.id);
+                                    const previousMessage = group.messages[messageIndex - 1];
+                                    const nextMessage = group.messages[messageIndex + 1];
                                     const matchIndices = getMatchIndices?.(message.id) || null;
                                     const isActiveResult = activeSearchResultId === message.id;
                                     
@@ -92,6 +110,8 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
                                             message={message}
                                             index={globalIndex}
                                             animate={globalIndex >= messages.length - messagesToAnimate}
+                                            isFirstInGroup={!previousMessage || previousMessage.senderId !== message.senderId}
+                                            isLastInGroup={!nextMessage || nextMessage.senderId !== message.senderId}
                                             matchIndices={matchIndices}
                                             isActiveResult={isActiveResult}
                                             setRef={(el) => setMessageRef(message.id, el)}
@@ -157,10 +177,30 @@ const StickyDateSeparator = ({ date }: { date: string }) => {
     );
 };
 
-const Message = React.memo(({ message, index, animate, matchIndices, isActiveResult, setRef }: { 
+const getBubbleClasses = ({
+    isCurrentUser,
+    isFirstInGroup,
+    isLastInGroup,
+}: {
+    isCurrentUser: boolean;
+    isFirstInGroup: boolean;
+    isLastInGroup: boolean;
+}) => classNames(
+    "relative min-w-0 max-w-[min(80vw,320px)] overflow-hidden shadow-lg",
+    isCurrentUser ? "bg-[var(--message-own)] text-white" : "bg-[var(--message-other)] text-[var(--message-text)]",
+    isFirstInGroup ? "rounded-t-2xl" : "rounded-t-md",
+    isLastInGroup ? "rounded-b-2xl" : "rounded-b-md",
+    isCurrentUser
+        ? (isLastInGroup ? "rounded-br-sm" : "rounded-r-md")
+        : (isLastInGroup ? "rounded-bl-sm" : "rounded-l-md")
+);
+
+const Message = React.memo(({ message, index, animate, isFirstInGroup, isLastInGroup, matchIndices, isActiveResult, setRef }: {
     message: MessageProps, 
     index: number, 
     animate: boolean,
+    isFirstInGroup: boolean,
+    isLastInGroup: boolean,
     matchIndices?: [number, number][] | null,
     isActiveResult?: boolean,
     setRef?: (el: HTMLDivElement | null) => void
@@ -175,27 +215,33 @@ const Message = React.memo(({ message, index, animate, matchIndices, isActiveRes
         <motion.div
             ref={setRef}
             className={classNames(
-                `message ${messageClass}`,
+                `message ${messageClass} ${isLastInGroup ? 'mb-3' : 'mb-1'}`,
                 isActiveResult ? 'ring-2 ring-yellow-500/50 rounded-2xl bg-yellow-500/10' : ''
             )}
-            initial={{ opacity: 0, scale: 0 }}
+            initial={{ opacity: 0, scale: 0.8, y: 12, originX: isCurrentUser ? 1 : 0, originY: 1 }}
             animate={{ 
                 opacity: 1, 
                 scale: 1
             }}
             transition={animate ? { duration: 0.5, type: "spring", bounce: 0.25, delay: ((index + 1) % messagesToAnimate) * 0.1 } : { duration: 0.1 }}
         >
-            {!isCurrentUser && (
+            {!isCurrentUser && isLastInGroup && (
                 <MessageAvatar message={message} />
             )}
-            <MessageBody message={message} isCurrentUser={isCurrentUser} matchIndices={matchIndices} />
+            {!isCurrentUser && !isLastInGroup && <div className="w-8 shrink-0" />}
+            <MessageBody
+                message={message}
+                isCurrentUser={isCurrentUser}
+                isFirstInGroup={isFirstInGroup}
+                isLastInGroup={isLastInGroup}
+                matchIndices={matchIndices}
+            />
         </motion.div>
     );
 });
 
 const MessageAvatar = ({ message }: { message: any }) => {
-    const { user, isCurrentUserBlocked, isReceiverBlocked, isGlobalChat, isGroupChat } = useChatStore();
-    const isBlocked = isCurrentUserBlocked || isReceiverBlocked;
+    const { isGlobalChat, isGroupChat } = useChatStore();
 
     // For group/global chats, use sender's avatar and username
     if (isGlobalChat || isGroupChat) {
@@ -208,19 +254,14 @@ const MessageAvatar = ({ message }: { message: any }) => {
         );
     }
 
-    // For 1-on-1 chats, use the other user's avatar
-    return (
-        <Avatar 
-            src={isBlocked ? null : user.avatar} 
-            name={user.username} 
-            size="xs"
-        />
-    );
+    return null;
 }
 
-const MessageBody = ({ message, isCurrentUser, matchIndices }: { 
+const MessageBody = ({ message, isCurrentUser, isFirstInGroup, isLastInGroup, matchIndices }: {
     message: MessageProps, 
     isCurrentUser: boolean,
+    isFirstInGroup: boolean,
+    isLastInGroup: boolean,
     matchIndices?: [number, number][] | null 
 }) => {
 
@@ -239,6 +280,8 @@ const MessageBody = ({ message, isCurrentUser, matchIndices }: {
                     imgSrc={message.img} 
                     text={message.text} 
                     isCurrentUser={isCurrentUser} 
+                    isFirstInGroup={isFirstInGroup}
+                    isLastInGroup={isLastInGroup}
                     matchIndices={matchIndices}
                 />
             ) : (
@@ -249,6 +292,13 @@ const MessageBody = ({ message, isCurrentUser, matchIndices }: {
                             text={message.text} 
                             username={!isCurrentUser ? message.senderUsername : undefined} 
                             isCurrentUser={isCurrentUser}
+                            isFirstInGroup={isFirstInGroup}
+                            isLastInGroup={isLastInGroup}
+                            messageTime={isFailed ? 'Failed' : formatTime(message.createdAt?.toDate?.() || new Date())}
+                            isRead={isRead}
+                            isSending={isSending}
+                            isFailed={isFailed}
+                            isDelivered={isDelivered}
                             matchIndices={matchIndices}
                         />
                     )}
@@ -256,9 +306,9 @@ const MessageBody = ({ message, isCurrentUser, matchIndices }: {
             )}
 
             {/* MESSAGE TIME AND STATUS */}
-            <div className="flex items-center gap-1.5 px-1">
+            {(!message.text || message.img) && <div className="flex items-center gap-1.5 px-1 text-[11px] text-[var(--text-muted)]">
                 {/* Time or status text */}
-                <span className="text-[11px] text-neutral-400">
+                <span>
                     {isFailed ? 'Failed' : formatTime(message.createdAt?.toDate?.() || new Date())}
                 </span>
 
@@ -329,31 +379,28 @@ const MessageBody = ({ message, isCurrentUser, matchIndices }: {
                         )}
                     </AnimatePresence>
                 )}
-            </div>
+            </div>}
         </div>
     )
 }
 
 
-const ImgWithCaption = ({ imgSrc, text, isCurrentUser, matchIndices }: { 
+const ImgWithCaption = ({ imgSrc, text, isCurrentUser, isFirstInGroup, isLastInGroup, matchIndices }: {
     imgSrc: string, 
     text: string, 
     isCurrentUser: boolean,
+    isFirstInGroup: boolean,
+    isLastInGroup: boolean,
     matchIndices?: [number, number][] | null
 }) => {
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     
     return (
         <>
-            <div className={classNames(
-                'rounded-2xl overflow-hidden shadow-lg',
-                isCurrentUser
-                    ? 'bg-gradient-to-br from-blue-600 to-blue-700'
-                    : 'bg-neutral-800/90 backdrop-blur-sm'
-            )}>
+            <div className={getBubbleClasses({ isCurrentUser, isFirstInGroup, isLastInGroup })}>
                 <ClickableImage imgSrc={imgSrc} onClick={() => setIsLightboxOpen(true)} />
-                <div className="px-4 py-2.5">
-                    <span className="text-white text-[15px] leading-relaxed break-words">
+                <div className="px-4 py-2.5 text-[var(--message-text)]">
+                    <span className="text-[15px] leading-relaxed break-words">
                         <HighlightedText text={text} matchIndices={matchIndices} />
                     </span>
                 </div>
@@ -396,10 +443,17 @@ const ClickableImage = ({ imgSrc, onClick, rounded = false }: { imgSrc: string, 
     )
 }
 
-const MessageParagraph = ({ text, username, isCurrentUser, matchIndices }: { 
+const MessageParagraph = ({ text, username, isCurrentUser, isFirstInGroup, isLastInGroup, messageTime, isRead, isSending, isFailed, isDelivered, matchIndices }: {
     text: string, 
     username?: string, 
     isCurrentUser: boolean,
+    isFirstInGroup: boolean,
+    isLastInGroup: boolean,
+    messageTime: string,
+    isRead: boolean | undefined,
+    isSending: boolean,
+    isFailed: boolean,
+    isDelivered: boolean,
     matchIndices?: [number, number][] | null
 }) => {
     const { isGlobalChat, isGroupChat } = useChatStore();
@@ -414,32 +468,35 @@ const MessageParagraph = ({ text, username, isCurrentUser, matchIndices }: {
     const isUrlOnly = urlOnlyRegex.test(trimmedText);
 
     return (
-        <div className={classNames(
-            'rounded-2xl overflow-hidden shadow-lg max-w-[320px]',
-            isCurrentUser
-                ? 'bg-gradient-to-br from-blue-600 to-blue-700'
-                : 'bg-neutral-800/90 backdrop-blur-sm'
-        )}>
+        <div className={getBubbleClasses({ isCurrentUser, isFirstInGroup, isLastInGroup })}>
             {/* Text content - hide URL if it's the only content and preview exists */}
             {(!isUrlOnly || !hasSuccessfulPreviews) && (
-                <div className="px-4 py-2.5 flex flex-col gap-1">
+                <div className="px-4 py-2.5 flex flex-wrap items-end gap-x-2 gap-y-1">
                     {(isGlobalChat || isGroupChat) && !isCurrentUser && (
-                        <span className="text-xs text-blue-400 font-semibold">{username}</span>
+                        <span className="basis-full text-xs text-[var(--accent-color)] font-semibold">{username}</span>
                     )}
-                    <span className="text-white text-[15px] leading-relaxed break-words">
+                    <span className="min-w-0 flex-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed">
                         <HighlightedText 
                             text={text} 
                             matchIndices={matchIndices} 
                             hideUrls={hasSuccessfulPreviews && !isUrlOnly}
                         />
                     </span>
+                    <MessageMeta
+                        isCurrentUser={isCurrentUser}
+                        messageTime={messageTime}
+                        isRead={isRead}
+                        isSending={isSending}
+                        isFailed={isFailed}
+                        isDelivered={isDelivered}
+                    />
                 </div>
             )}
             
             {/* Show username for URL-only messages with previews */}
             {isUrlOnly && hasSuccessfulPreviews && (isGlobalChat || isGroupChat) && !isCurrentUser && (
                 <div className="px-4 pt-2.5">
-                    <span className="text-xs text-blue-400 font-semibold">{username}</span>
+                    <span className="text-xs text-[var(--accent-color)] font-semibold">{username}</span>
                 </div>
             )}
             
@@ -457,6 +514,29 @@ const MessageParagraph = ({ text, username, isCurrentUser, matchIndices }: {
         </div>
     )
 }
+
+const MessageMeta = ({ isCurrentUser, messageTime, isRead, isSending, isFailed, isDelivered }: {
+    isCurrentUser: boolean;
+    messageTime: string;
+    isRead: boolean | undefined;
+    isSending: boolean;
+    isFailed: boolean;
+    isDelivered: boolean;
+}) => (
+    <span className={classNames(
+        "flex shrink-0 items-center gap-1 text-[10px] whitespace-nowrap translate-y-[2px]",
+        isCurrentUser ? "text-white/70" : "text-[var(--text-muted)]"
+    )}>
+        {messageTime}
+        {isCurrentUser && (
+            isSending ? <ClockIcon className="h-3.5 w-3.5" />
+                : isFailed ? <ExclamationCircleIcon className="h-3.5 w-3.5 text-red-300" />
+                : isRead ? <span className="flex"><CheckIconSolid className="h-3.5 w-3.5" /><CheckIconSolid className="-ml-1.5 h-3.5 w-3.5" /></span>
+                : isDelivered ? <span className="flex"><CheckIcon className="h-3.5 w-3.5" /><CheckIcon className="-ml-1.5 h-3.5 w-3.5" /></span>
+                : <CheckIcon className="h-3.5 w-3.5" />
+        )}
+    </span>
+);
 
 // Integrated preview that fits inside the message bubble
 const IntegratedLinkPreview = ({ preview }: { 

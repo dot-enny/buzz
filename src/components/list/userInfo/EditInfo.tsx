@@ -8,6 +8,7 @@ import { FormEventHandler, useRef, useState } from 'react';
 import { useUserStore } from '../../../lib/userStore';
 import { Spinner } from '../../ui/Spinner';
 import { classNames } from '../../../utils/helpers';
+import { Avatar as UserAvatar } from '../../ui/Avatar';
 
 interface EditInfoProps {
     isOpen: boolean;
@@ -107,7 +108,7 @@ const DialogContent = ({ selectAvatar, avatar, handleSubmit, removeAvatar, isLoa
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
             <div className="relative flex justify-center">
                 <label htmlFor="avatar" className="mx-auto relative cursor-pointer">
-                    <img src={avatar.url ? avatar.url : './img/avatar-placeholder.png' } alt="Profile Picture" className="size-20 rounded-full object-cover" />
+                    <UserAvatar src={avatar.url || null} name={currentUser.username} size="xl" className="!size-20" />
                     <div className="mix-blend-multiply hover:bg-gray-400 transition-all size-20 rounded-full grid place-items-center absolute top-0">
                         <CameraIcon className="size-5" />
                     </div>

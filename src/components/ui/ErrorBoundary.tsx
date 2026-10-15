@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { useRouteError, isRouteErrorResponse } from 'react-router-dom';
 import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { getFirebaseErrorMessage } from '../../utils/firebaseError';
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -139,7 +140,7 @@ export const RouteErrorBoundary = () => {
         errorStatus = `${error.status}`;
         errorMessage = error.statusText || error.data?.message || errorMessage;
     } else if (error instanceof Error) {
-        errorMessage = error.message;
+        errorMessage = getFirebaseErrorMessage(error);
     } else if (typeof error === 'string') {
         errorMessage = error;
     }

@@ -50,6 +50,16 @@
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
       }
+      .initial-loader-message {
+        display: none;
+        max-width: 320px;
+        padding: 24px;
+        color: #d4d4d4;
+        text-align: center;
+        line-height: 1.5;
+      }
+      .initial-loader.initial-loader-timeout .initial-loader-spinner { display: none; }
+      .initial-loader.initial-loader-timeout .initial-loader-message { display: block; }
       @keyframes spin { to { transform: rotate(360deg); } }
       /* Hide loader once React hydrates */
       .app-loaded .initial-loader { display: none; }
@@ -59,9 +69,18 @@
     <!-- Initial loading state (removed by React) -->
     <div class="initial-loader" id="initial-loader">
       <div class="initial-loader-spinner"></div>
+      <p class="initial-loader-message">Buzz could not finish starting. Check your local Firebase configuration and refresh the page.</p>
     </div>
     
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      setTimeout(function () {
+        var loader = document.getElementById('initial-loader');
+        if (loader && !document.body.classList.contains('app-loaded')) {
+          loader.classList.add('initial-loader-timeout');
+        }
+      }, 4000);
+    </script>
   </body>
 </html>
