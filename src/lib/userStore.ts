@@ -1,17 +1,22 @@
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { create } from 'zustand'
 import { db } from './firebase';
+
+interface AuthUserProfile {
+    email?: string | null;
+    displayName?: string | null;
+}
 
 interface UserStore {
     currentUser: any;
     isLoading: boolean;
-    fetchUserInfo: (uid: string) => void;  
+    fetchUserInfo: (uid: string, authUser?: AuthUserProfile) => Promise<void>;
 }
 
 export const useUserStore = create<UserStore>((set) => ({
     currentUser: null,
     isLoading: true,
-    fetchUserInfo: async (uid: string) => {
+    fetchUserInfo: async (uid: string, authUser?: AuthUserProfile) => {
         if(!uid) set({ currentUser: null, isLoading: false });
         
         try {
@@ -21,7 +26,18 @@ export const useUserStore = create<UserStore>((set) => ({
             if(docSnap.exists()) {
                 set({ currentUser: docSnap.data(), isLoading: false });
             } else {
-                set({ currentUser: null, isLoading: false });
+                const email = authUser?.email || "";
+                const profile = {
+                    username: authUser?.displayName || email.split("@")[0] || "Buzz user",
+                    email,
+                    id: uid,
+                    avatar: "",
+                    status: "I'm using buzz",
+                    blocked: []
+                };
+
+                await setDoc(docRef, profile);
+                set({ currentUser: profile, isLoading: false });
             };
 
         } catch (err) {

@@ -23,7 +23,7 @@ export const ProtectedRoute = ({ children }: PropsWithChildren) => {
         const unSub = onAuthStateChanged(auth, async (user: any) => {
 			if(user) {
 				const uid = user.uid || '';
-				await fetchUserInfo(uid);
+				await fetchUserInfo(uid, user);
 			} else {
 				navigate('/auth/sign-in')
 			}
