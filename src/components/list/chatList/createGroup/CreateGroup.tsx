@@ -8,6 +8,7 @@ import { db } from '../../../../lib/firebase'
 import { upload } from '../../../../lib/upload'
 import { toast } from 'react-toastify'
 import Tooltip from '../../../ui/Tooltip'
+import { Avatar } from '../../../ui/Avatar'
 
 interface CreateGroupProps {
   isOpen: boolean
@@ -266,11 +267,7 @@ export default function CreateGroup({ isOpen, setIsOpen }: CreateGroupProps) {
                         onClick={() => toggleUserSelection(user.id)}
                         className="flex items-center gap-3 p-3 hover:bg-neutral-800/50 rounded-lg cursor-pointer transition-colors mb-2"
                       >
-                        <img
-                          src={user.avatar || '/img/avatar-placeholder.png'}
-                          alt={user.username}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
+                        <Avatar src={user.avatar} name={user.username} size="sm" />
                         <div className="flex-1">
                           <h4 className="font-medium">{user.username}</h4>
                           <p className="text-sm text-neutral-500 line-clamp-1">{user.status}</p>

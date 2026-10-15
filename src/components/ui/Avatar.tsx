@@ -1,5 +1,6 @@
 import { getAvatarColor, getInitials } from '../../utils/avatarHelpers';
 import { UserGroupIcon } from '@heroicons/react/24/solid';
+import { useEffect, useState } from 'react';
 
 interface AvatarProps {
   src?: string | null;
@@ -18,13 +19,19 @@ const sizeClasses = {
 
 export const Avatar = ({ src, name, size = 'md', className = '' }: AvatarProps) => {
   const sizeClass = sizeClasses[size];
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
   
-  if (src) {
+  if (src && !imageFailed) {
     return (
       <img
         src={src}
         alt={name}
         className={`${sizeClass} rounded-full object-cover ${className}`}
+        onError={() => setImageFailed(true)}
       />
     );
   }
@@ -44,13 +51,19 @@ export const Avatar = ({ src, name, size = 'md', className = '' }: AvatarProps) 
 // For group chats without photos
 export const GroupAvatar = ({ src, name = 'Group', size = 'md', className = '' }: { src?: string | null; name?: string; size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; className?: string }) => {
   const sizeClass = sizeClasses[size];
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
   
-  if (src) {
+  if (src && !imageFailed) {
     return (
       <img
         src={src}
         alt="Group"
         className={`${sizeClass} rounded-full object-cover ${className}`}
+        onError={() => setImageFailed(true)}
       />
     );
   }

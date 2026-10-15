@@ -4,6 +4,7 @@ import Tooltip from "../../ui/Tooltip";
 import { useState } from "react";
 import EditInfo from "./EditInfo";
 import { ThemeToggle } from "../../ui/ThemeToggle";
+import { Avatar } from "../../ui/Avatar";
 
 export const UserInfo = () => {
 
@@ -13,7 +14,7 @@ export const UserInfo = () => {
   return (
     <div className="p-5 flex items-center justify-between">
       <div className="flex items-center gap-5">
-        <img src={currentUser.avatar || './img/avatar-placeholder.png'} alt="user" className="w-12 h-12 rounded-full object-cover" />
+        <Avatar src={currentUser.avatar} name={currentUser.username} size="md" />
         <span className="">
           <h2>{currentUser.username}</h2>
           <span className="text-xs text-gray-400 line-clamp-1">{currentUser.status}</span>
