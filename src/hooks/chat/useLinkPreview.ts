@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export interface LinkPreviewData {
     url: string;
@@ -11,8 +11,15 @@ export interface LinkPreviewData {
     error: boolean;
 }
 
-// Cache for link previews to avoid repeated API calls
-const previewCache = new Map<string, LinkPreviewData>();
+// Cache configuration
+const CACHE_NAME = 'link-preview-cache-v1';
+const SESSION_CACHE_PREFIX = 'lp_cache_';
+
+// In-memory L1 cache for synchronous initial state & instant lookups within the same session
+const memoryCache = new Map<string, LinkPreviewData>();
+
+// In-flight request deduplication map to prevent concurrent duplicate network requests for the same URL
+const inFlightRequests = new Map<string, Promise<LinkPreviewData>>();
 
 // URL detection regex - matches http(s) URLs
 const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
@@ -21,10 +28,142 @@ const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
 const YOUTUBE_REGEX = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
 // GitHub repo pattern
-const GITHUB_REPO_REGEX = /github\.com\/([^\/]+)\/([^\/\s?#]+)/;
+const GITHUB_REPO_REGEX = /github\.com\/([^/]+)\/([^/\s?#]+)/;
 
 // GitHub profile pattern (just username, no repo)
-const GITHUB_PROFILE_REGEX = /github\.com\/([^\/\s?#]+)\/?$/;
+const GITHUB_PROFILE_REGEX = /github\.com\/([^/\s?#]+)\/?$/;
+
+/**
+ * Validate that a URL is a valid HTTP or HTTPS URL (required by the Cache API)
+ */
+const isValidHttpUrl = (url: string): boolean => {
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * Check if the browser supports the native Cache API
+ */
+const isCacheApiSupported = (): boolean => {
+    return typeof window !== 'undefined' && 'caches' in window;
+};
+
+/**
+ * Check if sessionStorage is available
+ */
+const isSessionStorageSupported = (): boolean => {
+    return typeof window !== 'undefined' && 'sessionStorage' in window;
+};
+
+/**
+ * Read link preview data from persistent cache (Cache API with sessionStorage fallback)
+ */
+export const readFromCache = async (url: string): Promise<LinkPreviewData | null> => {
+    // 1. Check in-memory L1 cache first for fastest response
+    if (memoryCache.has(url)) {
+        return memoryCache.get(url)!;
+    }
+
+    // 2. Try browser native Cache API (persists across reloads, hard refreshes, and tabs)
+    if (isCacheApiSupported() && isValidHttpUrl(url)) {
+        try {
+            const cache = await window.caches.open(CACHE_NAME);
+            const cachedResponse = await cache.match(url);
+            if (cachedResponse) {
+                const data: LinkPreviewData = await cachedResponse.json();
+                memoryCache.set(url, data);
+                return data;
+            }
+        } catch (err) {
+            console.warn('[LinkPreview] Cache API read error, falling back:', err);
+        }
+    }
+
+    // 3. Fallback to sessionStorage if Cache API is unavailable or had no match
+    if (isSessionStorageSupported()) {
+        try {
+            const cachedJson = window.sessionStorage.getItem(`${SESSION_CACHE_PREFIX}${url}`);
+            if (cachedJson) {
+                const data: LinkPreviewData = JSON.parse(cachedJson);
+                memoryCache.set(url, data);
+                return data;
+            }
+        } catch (err) {
+            console.warn('[LinkPreview] sessionStorage read error:', err);
+        }
+    }
+
+    return null;
+};
+
+/**
+ * Save link preview data to persistent cache (Cache API with sessionStorage fallback)
+ */
+export const writeToCache = async (url: string, data: LinkPreviewData): Promise<void> => {
+    // 1. Update in-memory L1 cache
+    memoryCache.set(url, data);
+
+    // 2. Write to browser native Cache API
+    if (isCacheApiSupported() && isValidHttpUrl(url)) {
+        try {
+            const cache = await window.caches.open(CACHE_NAME);
+            const response = new Response(JSON.stringify(data), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Cached-At': new Date().toISOString(),
+                },
+            });
+            await cache.put(url, response);
+        } catch (err) {
+            console.warn('[LinkPreview] Cache API write error, falling back:', err);
+        }
+    }
+
+    // 3. Also write to sessionStorage as fallback
+    if (isSessionStorageSupported()) {
+        try {
+            window.sessionStorage.setItem(`${SESSION_CACHE_PREFIX}${url}`, JSON.stringify(data));
+        } catch (err) {
+            console.warn('[LinkPreview] sessionStorage write error:', err);
+        }
+    }
+};
+
+/**
+ * Clear link preview cache across memory, Cache API, and sessionStorage
+ */
+export const clearLinkPreviewCache = async (): Promise<void> => {
+    memoryCache.clear();
+    inFlightRequests.clear();
+
+    if (isCacheApiSupported()) {
+        try {
+            await window.caches.delete(CACHE_NAME);
+        } catch (err) {
+            console.warn('[LinkPreview] Error deleting Cache API cache:', err);
+        }
+    }
+
+    if (isSessionStorageSupported()) {
+        try {
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < window.sessionStorage.length; i++) {
+                const key = window.sessionStorage.key(i);
+                if (key && key.startsWith(SESSION_CACHE_PREFIX)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach((key) => window.sessionStorage.removeItem(key));
+        } catch (err) {
+            console.warn('[LinkPreview] Error clearing sessionStorage:', err);
+        }
+    }
+};
 
 /**
  * Extract all URLs from text
@@ -173,43 +312,100 @@ const fetchLinkPreview = async (url: string): Promise<Partial<LinkPreviewData>> 
 };
 
 /**
- * Hook to get link preview for a URL
+ * Retrieve link preview data with persistent caching and in-flight deduplication
+ */
+export const getCachedLinkPreview = async (url: string): Promise<LinkPreviewData> => {
+    // 1. Check in-memory L1 cache immediately
+    if (memoryCache.has(url)) {
+        const cached = memoryCache.get(url)!;
+        console.log(`🟢 CACHE HIT: ${url}`, cached);
+        return cached;
+    }
+
+    // 2. Prevent duplicate concurrent requests for the same URL
+    if (inFlightRequests.has(url)) {
+        return inFlightRequests.get(url)!;
+    }
+
+    // 3. Create fetch/cache task
+    const task = (async () => {
+        // Cache Read: check persistent Cache API / sessionStorage
+        const cached = await readFromCache(url);
+        if (cached) {
+            console.log(`🟢 CACHE HIT: ${url}`, cached);
+            return cached;
+        }
+
+        // Cache Miss: fetch preview data
+        console.log(`🔴 CACHE MISS: ${url}`);
+        const rawData = await fetchLinkPreview(url);
+        const previewData: LinkPreviewData = {
+            ...rawData,
+            url,
+            isLoading: false,
+            error: rawData.error || false,
+        };
+
+        // Cache Write: save to persistent cache
+        await writeToCache(url, previewData);
+        return previewData;
+    })();
+
+    inFlightRequests.set(url, task);
+    try {
+        return await task;
+    } finally {
+        inFlightRequests.delete(url);
+    }
+};
+
+/**
+ * Hook to get link preview for a single URL
  */
 export const useLinkPreview = (url: string | null) => {
-    const [preview, setPreview] = useState<LinkPreviewData | null>(null);
+    // Initialize with memory cached data if available (prevents layout shift / skeleton flicker)
+    const [preview, setPreview] = useState<LinkPreviewData | null>(() => {
+        if (!url || typeof window === 'undefined') return null;
+        return memoryCache.get(url) || null;
+    });
 
     useEffect(() => {
+        let isCancelled = false;
+
         if (!url) {
             setPreview(null);
             return;
         }
 
-        // Check cache first
-        if (previewCache.has(url)) {
-            setPreview(previewCache.get(url)!);
-            return;
+        // If we don't have it in memory yet, set loading state
+        if (!memoryCache.has(url)) {
+            setPreview({
+                url,
+                isLoading: true,
+                error: false,
+            });
         }
 
-        // Set loading state
-        setPreview({
-            url,
-            isLoading: true,
-            error: false,
-        });
+        // Retrieve preview (Cache API read or network fetch)
+        getCachedLinkPreview(url)
+            .then((data) => {
+                if (!isCancelled) {
+                    setPreview(data);
+                }
+            })
+            .catch(() => {
+                if (!isCancelled) {
+                    setPreview({
+                        url,
+                        isLoading: false,
+                        error: true,
+                    });
+                }
+            });
 
-        // Fetch preview
-        fetchLinkPreview(url).then((data) => {
-            const previewData: LinkPreviewData = {
-                ...data,
-                url,
-                isLoading: false,
-                error: data.error || false,
-            };
-            
-            // Cache the result
-            previewCache.set(url, previewData);
-            setPreview(previewData);
-        });
+        return () => {
+            isCancelled = true;
+        };
     }, [url]);
 
     return preview;
@@ -219,50 +415,71 @@ export const useLinkPreview = (url: string | null) => {
  * Hook to get all link previews from a message
  */
 export const useMessageLinkPreviews = (text: string) => {
-    const [previews, setPreviews] = useState<LinkPreviewData[]>([]);
-    const urls = extractUrls(text);
+    // Stable key for URLs in the text (up to 3) to prevent re-fetching on keystrokes that don't alter URLs
+    const urlsKey = useMemo(() => {
+        if (!text) return '';
+        return extractUrls(text).slice(0, 3).join('|');
+    }, [text]);
+
+    // Stable array of URLs that only re-evaluates when urlsKey changes
+    const urls = useMemo(() => {
+        return urlsKey ? urlsKey.split('|') : [];
+    }, [urlsKey]);
+
+    // Initialize with memory cache if already populated
+    const [previews, setPreviews] = useState<LinkPreviewData[]>(() => {
+        if (!text || typeof window === 'undefined') return [];
+        const initialUrls = extractUrls(text).slice(0, 3);
+        return initialUrls
+            .map((url) => memoryCache.get(url))
+            .filter((p): p is LinkPreviewData => Boolean(p));
+    });
 
     useEffect(() => {
+        let isCancelled = false;
+
         if (urls.length === 0) {
-            setPreviews([]);
+            setPreviews((prev) => (prev.length === 0 ? prev : []));
             return;
         }
 
-        // Limit to first 3 URLs to avoid too many API calls
-        const urlsToFetch = urls.slice(0, 3);
+        // Check if all requested URLs are already in memory
+        const inMemory = urls.map((url) => memoryCache.get(url));
+        const allCachedInMemory = inMemory.every((item): item is LinkPreviewData => Boolean(item));
 
-        // Check cache and fetch missing
-        const fetchPreviews = async () => {
-            const results: LinkPreviewData[] = [];
-            
-            for (const url of urlsToFetch) {
-                if (previewCache.has(url)) {
-                    results.push(previewCache.get(url)!);
-                } else {
-                    const data = await fetchLinkPreview(url);
-                    const previewData: LinkPreviewData = {
-                        ...data,
-                        url,
-                        isLoading: false,
-                        error: data.error || false,
-                    };
-                    previewCache.set(url, previewData);
-                    results.push(previewData);
+        if (allCachedInMemory) {
+            setPreviews(inMemory as LinkPreviewData[]);
+        } else {
+            // Only set loading for URLs not yet available in memory
+            setPreviews(
+                urls.map((url) => {
+                    const mem = memoryCache.get(url);
+                    return (
+                        mem || {
+                            url,
+                            isLoading: true,
+                            error: false,
+                        }
+                    );
+                })
+            );
+        }
+
+        // Fetch / retrieve previews in parallel
+        Promise.all(urls.map((url) => getCachedLinkPreview(url)))
+            .then((results) => {
+                if (!isCancelled) {
+                    setPreviews(results);
                 }
-            }
-            
-            setPreviews(results);
+            })
+            .catch((err) => {
+                console.error('[LinkPreview] Error loading previews:', err);
+            });
+
+        return () => {
+            isCancelled = true;
         };
-
-        // Set loading state
-        setPreviews(urlsToFetch.map(url => ({
-            url,
-            isLoading: true,
-            error: false,
-        })));
-
-        fetchPreviews();
-    }, [text]);
+    }, [urls]);
 
     return previews;
 };
