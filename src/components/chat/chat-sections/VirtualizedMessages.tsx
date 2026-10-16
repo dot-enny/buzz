@@ -351,6 +351,10 @@ const MessageBody = ({
     const { isGlobalChat, isGroupChat } = useChatStore();
     const showSenderName = !isCurrentUser && (isGlobalChat || isGroupChat);
     const previews = useMessageLinkPreviews(message.text);
+    const hasSuccessfulPreviews = previews.some(preview => !preview.isLoading && !preview.error && preview.title);
+    const trimmedText = message.text.trim();
+    const isUrlOnly = /^https?:\/\/[^\s<>"{}|\\^`[\]]+$/.test(trimmedText);
+    const showMessageText = !isUrlOnly || !hasSuccessfulPreviews;
     const [lightboxOpen, setLightboxOpen] = useState(false);
 
     return (
@@ -379,11 +383,11 @@ const MessageBody = ({
                 </>
             )}
             
-            {message.text && (
+            {message.text && showMessageText && (
                 <div className="relative w-fit max-w-[min(80vw,320px)]">
                     <p className={getVirtualBubbleClasses({ isCurrentUser, isLastInGroup })}>
                         {matchIndices ? (
-                            <HighlightedText text={message.text} matchIndices={matchIndices} />
+                            <HighlightedText text={message.text} matchIndices={matchIndices} hideUrls={hasSuccessfulPreviews && !isUrlOnly} />
                         ) : (
                             message.text
                         )}
@@ -409,7 +413,7 @@ const MessageBody = ({
             )}
 
             {/* Timestamp and status */}
-            {!message.text && <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+            {(!message.text || !showMessageText) && <div className="flex items-center gap-1.5 text-xs text-neutral-500">
                 <span>{formatTime(message.createdAt.toDate())}</span>
                 {isCurrentUser && <MessageStatus message={message} />}
             </div>}
