@@ -12,6 +12,7 @@ import { ImageLightbox } from "../../ui/ImageLightbox";
 import { bubblySpring } from "../../ui/ConnectionStatus";
 import { useMessageLinkPreviews } from "../../../hooks/chat/useLinkPreview";
 import { HighlightedText } from "../../ui/HighlightedText";
+import { LinkPreview } from "../../ui/LinkPreview";
 
 // Format time as "2:34 PM"
 const formatTime = (date: Date): string => {
@@ -510,9 +511,10 @@ const MessageParagraph = ({ text, username, isCurrentUser, isLastInGroup, messag
                 {linkPreviews.length > 0 && (
                     <div className="border-t border-white/10">
                         {linkPreviews.map((preview, i) => (
-                            <IntegratedLinkPreview
+                            <LinkPreview
                                 key={preview.url + i}
                                 preview={preview}
+                                isCurrentUser={isCurrentUser}
                             />
                         ))}
                     </div>
@@ -561,90 +563,5 @@ const DoubleCheckIcon = ({ filled = false }: { filled?: boolean }) => (
         )}
     </span>
 );
-
-// Integrated preview that fits inside the message bubble
-const IntegratedLinkPreview = ({ preview }: { 
-    preview: any; 
-}) => {
-    if (preview.isLoading) {
-        return (
-            <div className="p-3 animate-pulse">
-                <div className="flex gap-3">
-                    <div className="w-12 h-12 rounded bg-white/10" />
-                    <div className="flex-1 space-y-2">
-                        <div className="h-3 bg-white/10 rounded w-3/4" />
-                        <div className="h-2 bg-white/10 rounded w-full" />
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (preview.error || !preview.title) {
-        // Show URL as clickable link if preview failed
-        return (
-            <a 
-                href={preview.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-3 text-blue-300 hover:underline text-sm truncate"
-            >
-                {preview.url}
-            </a>
-        );
-    }
-
-    return (
-        <a
-            href={preview.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block hover:bg-white/5 transition-colors"
-        >
-            {/* Image if available */}
-            {preview.image && (
-                <div className="aspect-video bg-black/20">
-                    <img 
-                        src={preview.image} 
-                        alt=""
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                    />
-                </div>
-            )}
-            
-            <div className="p-3">
-                {/* Title */}
-                <h4 className="font-medium text-white text-sm line-clamp-2">
-                    {preview.title}
-                </h4>
-                
-                {/* Description */}
-                {preview.description && (
-                    <p className="text-xs text-white/60 mt-1 line-clamp-2">
-                        {preview.description}
-                    </p>
-                )}
-                
-                {/* Site info */}
-                <div className="flex items-center gap-2 mt-2 text-xs text-white/40">
-                    {preview.favicon && (
-                        <img 
-                            src={preview.favicon} 
-                            alt=""
-                            className="w-3 h-3 rounded"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                        />
-                    )}
-                    <span className="truncate">{preview.siteName}</span>
-                </div>
-            </div>
-        </a>
-    );
-}
 
 Message.displayName = "Message";
