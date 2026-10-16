@@ -1,6 +1,6 @@
 import { useChatStore } from "../../lib/chatStore"
 import { TopBar } from "./chat-sections/TopBar"
-import { Messages } from "./chat-sections/Messages"
+import { VirtualizedMessages } from "./chat-sections/VirtualizedMessages"
 import { ComposeMessage } from "./chat-sections/ComposeMessaage"
 import { useMarkMessagesAsRead } from "../../hooks/chat/useMarkMessagesAsRead"
 import { useUpdateMessages } from "../../hooks/chat/useUpdateMessages"
@@ -12,13 +12,13 @@ import { AnimatePresence } from "framer-motion"
 
 export const Chat = () => {
   const { chatId } = useChatStore();
-  
+
   // Get messages and optimistic update callbacks
   const { messages, endRef, addOptimisticMessage, markMessageFailed, markMessageSent } = useUpdateMessages();
-  
+
   // Typing indicator
   const { typingUsers, setTyping, clearTyping } = useTypingIndicator();
-  
+
   // Message search
   const {
     searchQuery,
@@ -33,16 +33,16 @@ export const Chat = () => {
     goToPreviousResult,
     getMatchIndices,
   } = useMessageSearch(messages);
-  
+
   // Mark messages as read when chat is viewed
   useMarkMessagesAsRead();
 
   return (
     <div className="h-[100svh] flex flex-col flex-[2] border-l border-r border-neutral-800 relative">
-      {chatId  ? (
+      {chatId ? (
         <>
-          <TopBar 
-            onSearchClick={openSearch} 
+          <TopBar
+            onSearchClick={openSearch}
             typingUsernames={typingUsers.map(u => u.username)}
           />
           <ChatSearchBar
@@ -55,25 +55,25 @@ export const Chat = () => {
             onNextResult={goToNextResult}
             onPreviousResult={goToPreviousResult}
           />
-          <Messages 
-            messages={messages} 
+          <VirtualizedMessages
+            messages={messages}
             endRef={endRef}
             activeSearchResultId={activeResult?.message.id}
             getMatchIndices={getMatchIndices}
           />
-          
+
           {/* Typing indicator above compose */}
           <AnimatePresence>
             {typingUsers.length > 0 && (
               <TypingIndicator usernames={typingUsers.map(u => u.username)} />
             )}
           </AnimatePresence>
-          
-          <ComposeMessage 
-            optimisticCallbacks={{ 
-              addOptimisticMessage, 
-              markMessageFailed, 
-              markMessageSent 
+
+          <ComposeMessage
+            optimisticCallbacks={{
+              addOptimisticMessage,
+              markMessageFailed,
+              markMessageSent
             }}
             onTyping={setTyping}
             onStopTyping={clearTyping}

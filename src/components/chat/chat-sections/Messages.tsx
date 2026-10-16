@@ -99,7 +99,6 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
                                 {/* Messages for this date */}
                                 {group.messages.map((message: MessageProps, messageIndex: number) => {
                                     const globalIndex = messages.findIndex((m: any) => m.id === message.id);
-                                    const previousMessage = group.messages[messageIndex - 1];
                                     const nextMessage = group.messages[messageIndex + 1];
                                     const matchIndices = getMatchIndices?.(message.id) || null;
                                     const isActiveResult = activeSearchResultId === message.id;
@@ -110,7 +109,6 @@ export const Messages = ({ messages, endRef, activeSearchResultId, getMatchIndic
                                             message={message}
                                             index={globalIndex}
                                             animate={globalIndex >= messages.length - messagesToAnimate}
-                                            isFirstInGroup={!previousMessage || previousMessage.senderId !== message.senderId}
                                             isLastInGroup={!nextMessage || nextMessage.senderId !== message.senderId}
                                             matchIndices={matchIndices}
                                             isActiveResult={isActiveResult}
@@ -179,35 +177,47 @@ const StickyDateSeparator = ({ date }: { date: string }) => {
 
 const getBubbleClasses = ({
     isCurrentUser,
-    isFirstInGroup,
     isLastInGroup,
 }: {
     isCurrentUser: boolean;
-    isFirstInGroup: boolean;
     isLastInGroup: boolean;
 }) => classNames(
     "relative min-w-0 max-w-[min(80vw,320px)] overflow-hidden shadow-lg",
     isCurrentUser ? "bg-[var(--message-own)] text-white" : "bg-[var(--message-other)] text-[var(--message-text)]",
-    isFirstInGroup ? "rounded-t-2xl" : "rounded-t-md",
-    isLastInGroup ? "rounded-b-2xl" : "rounded-b-md",
-    isCurrentUser
-        ? (isLastInGroup ? "rounded-br-sm" : "rounded-r-md")
-        : (isLastInGroup ? "rounded-bl-sm" : "rounded-l-md")
+    "rounded-2xl",
+    isLastInGroup ? (isCurrentUser ? "rounded-br-sm" : "rounded-bl-sm") : ""
 );
 
-const Message = React.memo(({ message, index, animate, isFirstInGroup, isLastInGroup, matchIndices, isActiveResult, setRef }: {
+const BubbleTail = ({ isCurrentUser }: { isCurrentUser: boolean }) => (
+    <svg
+        aria-hidden="true"
+        viewBox="0 0 8 13"
+        className={classNames(
+            "pointer-events-none absolute bottom-0 h-[13px] w-2",
+            isCurrentUser ? "-right-[7px]" : "-left-[7px]"
+        )}
+    >
+        <path
+            d={isCurrentUser ? "M0 0V13H8C8 13 2 13 0 0Z" : "M8 0V13H0C0 13 6 13 8 0Z"}
+            fill={isCurrentUser ? "var(--message-own)" : "var(--message-other)"}
+        />
+    </svg>
+);
+
+const Message = React.memo(({ message, index, animate, isLastInGroup, matchIndices, isActiveResult, setRef }: {
     message: MessageProps, 
     index: number, 
     animate: boolean,
-    isFirstInGroup: boolean,
     isLastInGroup: boolean,
     matchIndices?: [number, number][] | null,
     isActiveResult?: boolean,
     setRef?: (el: HTMLDivElement | null) => void
 }) => {
     const { currentUser } = useUserStore();
+    const { isGlobalChat, isGroupChat } = useChatStore();
 
     const isCurrentUser = message.senderId === currentUser.id;
+    const showSenderAvatar = !isCurrentUser && (isGlobalChat || isGroupChat);
     const messageClass = isCurrentUser ? "self-end" : "self-start";
     const messagesToAnimate = 5; // Number of messages to animate
 
@@ -225,14 +235,13 @@ const Message = React.memo(({ message, index, animate, isFirstInGroup, isLastInG
             }}
             transition={animate ? { duration: 0.5, type: "spring", bounce: 0.25, delay: ((index + 1) % messagesToAnimate) * 0.1 } : { duration: 0.1 }}
         >
-            {!isCurrentUser && isLastInGroup && (
+            {showSenderAvatar && isLastInGroup && (
                 <MessageAvatar message={message} />
             )}
-            {!isCurrentUser && !isLastInGroup && <div className="w-8 shrink-0" />}
+            {showSenderAvatar && !isLastInGroup && <div className="w-8 shrink-0" />}
             <MessageBody
                 message={message}
                 isCurrentUser={isCurrentUser}
-                isFirstInGroup={isFirstInGroup}
                 isLastInGroup={isLastInGroup}
                 matchIndices={matchIndices}
             />
@@ -257,10 +266,9 @@ const MessageAvatar = ({ message }: { message: any }) => {
     return null;
 }
 
-const MessageBody = ({ message, isCurrentUser, isFirstInGroup, isLastInGroup, matchIndices }: {
+const MessageBody = ({ message, isCurrentUser, isLastInGroup, matchIndices }: {
     message: MessageProps, 
     isCurrentUser: boolean,
-    isFirstInGroup: boolean,
     isLastInGroup: boolean,
     matchIndices?: [number, number][] | null 
 }) => {
@@ -280,7 +288,6 @@ const MessageBody = ({ message, isCurrentUser, isFirstInGroup, isLastInGroup, ma
                     imgSrc={message.img} 
                     text={message.text} 
                     isCurrentUser={isCurrentUser} 
-                    isFirstInGroup={isFirstInGroup}
                     isLastInGroup={isLastInGroup}
                     matchIndices={matchIndices}
                 />
@@ -292,7 +299,6 @@ const MessageBody = ({ message, isCurrentUser, isFirstInGroup, isLastInGroup, ma
                             text={message.text} 
                             username={!isCurrentUser ? message.senderUsername : undefined} 
                             isCurrentUser={isCurrentUser}
-                            isFirstInGroup={isFirstInGroup}
                             isLastInGroup={isLastInGroup}
                             messageTime={isFailed ? 'Failed' : formatTime(message.createdAt?.toDate?.() || new Date())}
                             isRead={isRead}
@@ -349,8 +355,7 @@ const MessageBody = ({ message, isCurrentUser, isFirstInGroup, isLastInGroup, ma
                                 transition={bubblySpring}
                                 className="relative flex items-center w-4 h-3"
                             >
-                                <CheckIconSolid className="w-3.5 h-3.5 text-blue-400 absolute left-0" />
-                                <CheckIconSolid className="w-3.5 h-3.5 text-blue-400 absolute left-1" />
+                                <DoubleCheckIcon filled />
                             </motion.div>
                         ) : isDelivered ? (
                             // Delivered: Double check outline (gray)
@@ -362,8 +367,7 @@ const MessageBody = ({ message, isCurrentUser, isFirstInGroup, isLastInGroup, ma
                                 transition={bubblySpring}
                                 className="relative flex items-center w-4 h-3"
                             >
-                                <CheckIcon className="w-3.5 h-3.5 text-neutral-400 absolute left-0" />
-                                <CheckIcon className="w-3.5 h-3.5 text-neutral-400 absolute left-1" />
+                                <DoubleCheckIcon />
                             </motion.div>
                         ) : (
                             // Sent: Single check (gray)
@@ -385,11 +389,10 @@ const MessageBody = ({ message, isCurrentUser, isFirstInGroup, isLastInGroup, ma
 }
 
 
-const ImgWithCaption = ({ imgSrc, text, isCurrentUser, isFirstInGroup, isLastInGroup, matchIndices }: {
+const ImgWithCaption = ({ imgSrc, text, isCurrentUser, isLastInGroup, matchIndices }: {
     imgSrc: string, 
     text: string, 
     isCurrentUser: boolean,
-    isFirstInGroup: boolean,
     isLastInGroup: boolean,
     matchIndices?: [number, number][] | null
 }) => {
@@ -397,13 +400,16 @@ const ImgWithCaption = ({ imgSrc, text, isCurrentUser, isFirstInGroup, isLastInG
     
     return (
         <>
-            <div className={getBubbleClasses({ isCurrentUser, isFirstInGroup, isLastInGroup })}>
-                <ClickableImage imgSrc={imgSrc} onClick={() => setIsLightboxOpen(true)} />
-                <div className="px-4 py-2.5 text-[var(--message-text)]">
-                    <span className="text-[15px] leading-relaxed break-words">
-                        <HighlightedText text={text} matchIndices={matchIndices} />
-                    </span>
+            <div className="relative w-fit max-w-[min(80vw,320px)]">
+                <div className={getBubbleClasses({ isCurrentUser, isLastInGroup })}>
+                    <ClickableImage imgSrc={imgSrc} onClick={() => setIsLightboxOpen(true)} />
+                    <div className="px-4 py-2.5 text-[var(--message-text)]">
+                        <span className="text-[15px] leading-relaxed break-words">
+                            <HighlightedText text={text} matchIndices={matchIndices} />
+                        </span>
+                    </div>
                 </div>
+                {isLastInGroup && <BubbleTail isCurrentUser={isCurrentUser} />}
             </div>
             <ImageLightbox 
                 isOpen={isLightboxOpen} 
@@ -443,11 +449,10 @@ const ClickableImage = ({ imgSrc, onClick, rounded = false }: { imgSrc: string, 
     )
 }
 
-const MessageParagraph = ({ text, username, isCurrentUser, isFirstInGroup, isLastInGroup, messageTime, isRead, isSending, isFailed, isDelivered, matchIndices }: {
+const MessageParagraph = ({ text, username, isCurrentUser, isLastInGroup, messageTime, isRead, isSending, isFailed, isDelivered, matchIndices }: {
     text: string, 
     username?: string, 
     isCurrentUser: boolean,
-    isFirstInGroup: boolean,
     isLastInGroup: boolean,
     messageTime: string,
     isRead: boolean | undefined,
@@ -468,49 +473,52 @@ const MessageParagraph = ({ text, username, isCurrentUser, isFirstInGroup, isLas
     const isUrlOnly = urlOnlyRegex.test(trimmedText);
 
     return (
-        <div className={getBubbleClasses({ isCurrentUser, isFirstInGroup, isLastInGroup })}>
-            {/* Text content - hide URL if it's the only content and preview exists */}
-            {(!isUrlOnly || !hasSuccessfulPreviews) && (
-                <div className="px-4 py-2.5 flex flex-wrap items-end gap-x-2 gap-y-1">
-                    {(isGlobalChat || isGroupChat) && !isCurrentUser && (
-                        <span className="basis-full text-xs text-[var(--accent-color)] font-semibold">{username}</span>
-                    )}
-                    <span className="min-w-0 flex-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed">
-                        <HighlightedText 
-                            text={text} 
-                            matchIndices={matchIndices} 
-                            hideUrls={hasSuccessfulPreviews && !isUrlOnly}
+        <div className="relative w-fit max-w-[min(80vw,320px)]">
+            <div className={getBubbleClasses({ isCurrentUser, isLastInGroup })}>
+                {/* Text content - hide URL if it's the only content and preview exists */}
+                {(!isUrlOnly || !hasSuccessfulPreviews) && (
+                    <div className="px-4 py-2.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+                        {(isGlobalChat || isGroupChat) && !isCurrentUser && (
+                            <span className="basis-full text-xs text-[var(--accent-color)] font-semibold">{username}</span>
+                        )}
+                        <span className="min-w-0 flex-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed">
+                            <HighlightedText
+                                text={text}
+                                matchIndices={matchIndices}
+                                hideUrls={hasSuccessfulPreviews && !isUrlOnly}
+                            />
+                        </span>
+                        <MessageMeta
+                            isCurrentUser={isCurrentUser}
+                            messageTime={messageTime}
+                            isRead={isRead}
+                            isSending={isSending}
+                            isFailed={isFailed}
+                            isDelivered={isDelivered}
                         />
-                    </span>
-                    <MessageMeta
-                        isCurrentUser={isCurrentUser}
-                        messageTime={messageTime}
-                        isRead={isRead}
-                        isSending={isSending}
-                        isFailed={isFailed}
-                        isDelivered={isDelivered}
-                    />
-                </div>
-            )}
-            
-            {/* Show username for URL-only messages with previews */}
-            {isUrlOnly && hasSuccessfulPreviews && (isGlobalChat || isGroupChat) && !isCurrentUser && (
-                <div className="px-4 pt-2.5">
-                    <span className="text-xs text-[var(--accent-color)] font-semibold">{username}</span>
-                </div>
-            )}
-            
-            {/* Integrated Link Previews */}
-            {linkPreviews.length > 0 && (
-                <div className="border-t border-white/10">
-                    {linkPreviews.map((preview, i) => (
-                        <IntegratedLinkPreview 
-                            key={preview.url + i} 
-                            preview={preview}
-                        />
-                    ))}
-                </div>
-            )}
+                    </div>
+                )}
+
+                {/* Show username for URL-only messages with previews */}
+                {isUrlOnly && hasSuccessfulPreviews && (isGlobalChat || isGroupChat) && !isCurrentUser && (
+                    <div className="px-4 pt-2.5">
+                        <span className="text-xs text-[var(--accent-color)] font-semibold">{username}</span>
+                    </div>
+                )}
+
+                {/* Integrated Link Previews */}
+                {linkPreviews.length > 0 && (
+                    <div className="border-t border-white/10">
+                        {linkPreviews.map((preview, i) => (
+                            <IntegratedLinkPreview
+                                key={preview.url + i}
+                                preview={preview}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+            {isLastInGroup && <BubbleTail isCurrentUser={isCurrentUser} />}
         </div>
     )
 }
@@ -531,9 +539,25 @@ const MessageMeta = ({ isCurrentUser, messageTime, isRead, isSending, isFailed, 
         {isCurrentUser && (
             isSending ? <ClockIcon className="h-3.5 w-3.5" />
                 : isFailed ? <ExclamationCircleIcon className="h-3.5 w-3.5 text-red-300" />
-                : isRead ? <span className="flex"><CheckIconSolid className="h-3.5 w-3.5" /><CheckIconSolid className="-ml-1.5 h-3.5 w-3.5" /></span>
-                : isDelivered ? <span className="flex"><CheckIcon className="h-3.5 w-3.5" /><CheckIcon className="-ml-1.5 h-3.5 w-3.5" /></span>
+                : isRead ? <DoubleCheckIcon filled />
+                : isDelivered ? <DoubleCheckIcon />
                 : <CheckIcon className="h-3.5 w-3.5" />
+        )}
+    </span>
+);
+
+const DoubleCheckIcon = ({ filled = false }: { filled?: boolean }) => (
+    <span className={classNames("relative inline-block h-3.5 w-3.5", filled ? "text-blue-400" : "text-neutral-400")}>
+        {filled ? (
+            <>
+                <CheckIconSolid className="absolute left-0 top-0 h-3.5 w-3.5" />
+                <CheckIconSolid className="absolute left-1 top-0 h-3.5 w-3.5" />
+            </>
+        ) : (
+            <>
+                <CheckIcon className="absolute left-0 top-0 h-3.5 w-3.5" />
+                <CheckIcon className="absolute left-1 top-0 h-3.5 w-3.5" />
+            </>
         )}
     </span>
 );
