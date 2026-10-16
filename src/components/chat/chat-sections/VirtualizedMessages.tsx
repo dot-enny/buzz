@@ -19,10 +19,10 @@ const VIRTUALIZATION_THRESHOLD = 100;
 
 // Format time as "2:34 PM"
 const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+    return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
         minute: '2-digit',
-        hour12: true 
+        hour12: true
     });
 };
 
@@ -52,12 +52,12 @@ interface VirtualizedMessagesProps {
  * VirtualizedMessages - High-performance message list for chats with 100+ message items
  * Uses TanStack Virtual for windowed rendering with dynamic height estimation
  */
-export const VirtualizedMessages = ({ 
-    messages, 
+export const VirtualizedMessages = ({
+    messages,
     endRef,
-    activeSearchResultId, 
+    activeSearchResultId,
     getMatchIndices,
-    onScrollToBottom 
+    onScrollToBottom
 }: VirtualizedMessagesProps) => {
     const { chatId, isGlobalChat, isGroupChat } = useChatStore();
     const parentRef = useRef<HTMLDivElement>(null);
@@ -104,26 +104,26 @@ export const VirtualizedMessages = ({
     // Auto-scroll to bottom for new messages
     useEffect(() => {
         if (!messages) return;
-        
+
         const currentCount = messages.length;
         const hasNewMessages = currentCount > prevMessageCount.current;
-        
+
         if (hasNewMessages && isAtBottom && shouldVirtualize) {
             virtualizer.scrollToIndex(flattenedItems.length - 1, { align: 'end' });
             onScrollToBottom?.();
         }
-        
+
         prevMessageCount.current = currentCount;
     }, [messages, isAtBottom, flattenedItems.length, shouldVirtualize, virtualizer, onScrollToBottom]);
 
     // Scroll to active search result
     useEffect(() => {
         if (!activeSearchResultId || !shouldVirtualize) return;
-        
+
         const index = flattenedItems.findIndex(
             item => item.type === 'message' && item.message?.id === activeSearchResultId
         );
-        
+
         if (index !== -1) {
             virtualizer.scrollToIndex(index, { align: 'center', behavior: 'smooth' });
         }
@@ -133,7 +133,7 @@ export const VirtualizedMessages = ({
     const handleScroll = useCallback(() => {
         const element = parentRef.current;
         if (!element) return;
-        
+
         const { scrollTop, scrollHeight, clientHeight } = element;
         const threshold = 100;
         setIsAtBottom(scrollHeight - scrollTop - clientHeight < threshold);
@@ -142,7 +142,7 @@ export const VirtualizedMessages = ({
     // If not enough messages, render without virtualization (automatic fallback)
     if (!shouldVirtualize) {
         return (
-            <NonVirtualizedMessages 
+            <NonVirtualizedMessages
                 messages={messages}
                 endRef={endRef}
                 activeSearchResultId={activeSearchResultId}
@@ -154,7 +154,7 @@ export const VirtualizedMessages = ({
     }
 
     return (
-        <div 
+        <div
             ref={parentRef}
             className="flex-1 overflow-auto p-5 pt-0"
             onScroll={handleScroll}
@@ -175,7 +175,7 @@ export const VirtualizedMessages = ({
                 >
                     {virtualizer.getVirtualItems().map((virtualItem) => {
                         const item = flattenedItems[virtualItem.index];
-                        
+
                         return (
                             <div
                                 key={virtualItem.key}
@@ -192,7 +192,7 @@ export const VirtualizedMessages = ({
                                 {item.type === 'date' ? (
                                     <DateSeparator date={item.date!} />
                                 ) : (
-                                    <VirtualMessage 
+                                    <VirtualMessage
                                         message={item.message!}
                                         isLastInGroup={item.isLastInGroup ?? true}
                                         matchIndices={getMatchIndices?.(item.message!.id) || null}
@@ -204,7 +204,7 @@ export const VirtualizedMessages = ({
                     })}
                 </div>
             )}
-            
+
             {/* Scroll to bottom button */}
             <AnimatePresence>
                 {!isAtBottom && messages && messages.length > 0 && (
@@ -237,7 +237,7 @@ interface FlattenedItem {
 function flattenMessages(messages: MessageProps[]): FlattenedItem[] {
     const grouped = groupMessagesByDate(messages);
     const items: FlattenedItem[] = [];
-    
+
     grouped.forEach((group: { date: string; messages: MessageProps[] }) => {
         items.push({ type: 'date', key: `date-${group.date}`, date: group.date });
         group.messages.forEach((message: MessageProps, messageIndex: number) => {
@@ -250,7 +250,7 @@ function flattenMessages(messages: MessageProps[]): FlattenedItem[] {
             });
         });
     });
-    
+
     return items;
 }
 
@@ -296,12 +296,12 @@ const PreviewMessageMeta = ({ message, isCurrentUser }: { message: MessageProps;
 );
 
 // Single virtualized message
-const VirtualMessage = ({ 
-    message, 
+const VirtualMessage = ({
+    message,
     isLastInGroup,
     matchIndices,
-    isActiveResult 
-}: { 
+    isActiveResult
+}: {
     message: MessageProps;
     isLastInGroup: boolean;
     matchIndices: [number, number][] | null;
@@ -314,7 +314,7 @@ const VirtualMessage = ({
     const messageClass = isCurrentUser ? 'self-end' : 'self-start';
 
     return (
-        <div 
+        <div
             className={classNames(
                 `message ${messageClass} ${isLastInGroup ? 'mb-3' : 'mb-1'}`,
                 isActiveResult ? 'ring-2 ring-yellow-500/50 rounded-2xl bg-yellow-500/10' : ''
@@ -334,10 +334,10 @@ const MessageAvatar = ({ message }: { message: MessageProps }) => {
 
     if (isGlobalChat || isGroupChat) {
         return (
-            <Avatar 
-                src={message.senderAvatar} 
-                name={message.senderUsername || 'User'} 
-                size="xs" 
+            <Avatar
+                src={message.senderAvatar}
+                name={message.senderUsername || 'User'}
+                size="xs"
                 className="shrink-0"
             />
         );
@@ -347,12 +347,12 @@ const MessageAvatar = ({ message }: { message: MessageProps }) => {
 };
 
 // Message body with text/image
-const MessageBody = ({ 
-    message, 
+const MessageBody = ({
+    message,
     isCurrentUser,
     isLastInGroup,
-    matchIndices 
-}: { 
+    matchIndices
+}: {
     message: MessageProps;
     isCurrentUser: boolean;
     isLastInGroup: boolean;
@@ -376,25 +376,25 @@ const MessageBody = ({
                     {message.senderUsername}
                 </span>
             )}
-            
+
             {message.img && (
-                <>
-                    <img 
-                        src={message.img} 
-                        alt="message" 
-                        className="rounded-lg max-h-80 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                <div className="w-fit max-w-[min(80vw,320px)] rounded-lg overflow-hidden">
+                    <img
+                        src={message.img}
+                        alt="message"
+                        className="w-full max-h-80 object-contain cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => setLightboxOpen(true)}
                         loading="lazy"
                         decoding="async"
                     />
-                    <ImageLightbox 
-                        src={message.img} 
-                        isOpen={lightboxOpen} 
-                        onClose={() => setLightboxOpen(false)} 
+                    <ImageLightbox
+                        src={message.img}
+                        isOpen={lightboxOpen}
+                        onClose={() => setLightboxOpen(false)}
                     />
-                </>
+                </div>
             )}
-            
+
             {message.text && showMessageText && !hasLinkPreviews && (
                 <div className="relative w-fit max-w-[min(80vw,320px)]">
                     <div className={getVirtualBubbleClasses({ isCurrentUser, isLastInGroup })}>
@@ -526,18 +526,18 @@ const EmptyState = ({ isGlobalChat, isGroupChat }: { isGlobalChat: boolean; isGr
                 {isGlobalChat ? 'Start the Conversation' : isGroupChat ? 'No Messages Yet' : 'Say Hello!'}
             </h3>
             <p className="text-sm text-neutral-400 max-w-xs">
-                {isGlobalChat 
-                    ? 'Be the first to send a message in the global chat' 
-                    : isGroupChat 
-                    ? 'Start chatting with your group members'
-                    : 'Send a message to start the conversation'}
+                {isGlobalChat
+                    ? 'Be the first to send a message in the global chat'
+                    : isGroupChat
+                        ? 'Start chatting with your group members'
+                        : 'Send a message to start the conversation'}
             </p>
         </div>
     </motion.div>
 );
 
 // Non-virtualized fallback for smaller lists
-const NonVirtualizedMessages = ({ 
+const NonVirtualizedMessages = ({
     messages,
     endRef,
     activeSearchResultId,
@@ -573,7 +573,7 @@ const NonVirtualizedMessages = ({
                     <div key={group.date} className="flex flex-col">
                         <DateSeparator date={group.date} />
                         {group.messages.map((message: MessageProps, messageIndex: number) => (
-                            <VirtualMessage 
+                            <VirtualMessage
                                 key={message.id}
                                 message={message}
                                 isLastInGroup={!group.messages[messageIndex + 1] || group.messages[messageIndex + 1].senderId !== message.senderId}
