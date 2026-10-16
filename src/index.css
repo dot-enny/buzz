@@ -75,7 +75,7 @@ body {
 }
 
 .message {
-    @apply max-w-[85%] flex items-end gap-2;
+    @apply w-full flex items-end gap-2;
 }
 
 .frosted-glass {

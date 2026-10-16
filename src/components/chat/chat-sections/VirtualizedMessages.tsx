@@ -264,7 +264,7 @@ const DateSeparator = ({ date }: { date: string }) => (
 );
 
 const getVirtualBubbleClasses = ({ isCurrentUser, isLastInGroup }: { isCurrentUser: boolean; isLastInGroup: boolean }) => classNames(
-    "relative min-w-0 max-w-[min(80vw,320px)] overflow-hidden p-3 text-[15px] leading-relaxed break-words [overflow-wrap:anywhere] shadow-lg rounded-2xl",
+    "relative min-w-0 max-w-[min(80vw,320px)] overflow-hidden shadow-lg rounded-2xl",
     isCurrentUser ? "bg-[var(--message-own)] text-white" : "bg-[var(--message-other)] text-[var(--message-text)]",
     isLastInGroup ? (isCurrentUser ? "rounded-br-sm" : "rounded-bl-sm") : ""
 );
@@ -283,6 +283,16 @@ const VirtualBubbleTail = ({ isCurrentUser }: { isCurrentUser: boolean }) => (
             fill={isCurrentUser ? "var(--message-own)" : "var(--message-other)"}
         />
     </svg>
+);
+
+const PreviewMessageMeta = ({ message, isCurrentUser }: { message: MessageProps; isCurrentUser: boolean }) => (
+    <span className={classNames(
+        "absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded bg-black/35 px-1.5 py-0.5 text-[10px] whitespace-nowrap",
+        isCurrentUser ? "text-white/80" : "text-neutral-300"
+    )}>
+        {formatTime(message.createdAt.toDate())}
+        {isCurrentUser && <MessageStatus message={message} />}
+    </span>
 );
 
 // Single virtualized message
@@ -312,7 +322,7 @@ const VirtualMessage = ({
             style={{ justifyContent: isCurrentUser ? 'flex-end' : 'flex-start' }}
         >
             {showSenderAvatar && isLastInGroup && <MessageAvatar message={message} />}
-            {showSenderAvatar && !isLastInGroup && <div className="w-8 shrink-0" />}
+            {showSenderAvatar && !isLastInGroup && <div className="w-6 shrink-0" />}
             <MessageBody message={message} isCurrentUser={isCurrentUser} isLastInGroup={isLastInGroup} matchIndices={matchIndices} />
         </div>
     );
@@ -327,7 +337,7 @@ const MessageAvatar = ({ message }: { message: MessageProps }) => {
             <Avatar 
                 src={message.senderAvatar} 
                 name={message.senderUsername || 'User'} 
-                size="sm" 
+                size="xs" 
                 className="shrink-0"
             />
         );
@@ -355,11 +365,13 @@ const MessageBody = ({
     const trimmedText = message.text.trim();
     const isUrlOnly = /^https?:\/\/[^\s<>"{}|\\^`[\]]+$/.test(trimmedText);
     const showMessageText = !isUrlOnly || !hasSuccessfulPreviews;
+    const isPreviewOnly = isUrlOnly && hasSuccessfulPreviews;
+    const hasLinkPreviews = previews.length > 0;
     const [lightboxOpen, setLightboxOpen] = useState(false);
 
     return (
-        <div className={`texts flex-1 flex flex-col gap-1 max-w-[70%] ${isCurrentUser ? 'items-end' : 'items-start'}`}>
-            {showSenderName && message.senderUsername && (
+        <div className={classNames("texts flex-1 flex flex-col gap-1", isCurrentUser && "items-end")}>
+            {showSenderName && message.senderUsername && hasLinkPreviews && (
                 <span className="text-xs text-blue-400 font-medium mb-0.5 truncate max-w-full">
                     {message.senderUsername}
                 </span>
@@ -383,9 +395,35 @@ const MessageBody = ({
                 </>
             )}
             
-            {message.text && showMessageText && (
+            {message.text && showMessageText && !hasLinkPreviews && (
                 <div className="relative w-fit max-w-[min(80vw,320px)]">
-                    <p className={getVirtualBubbleClasses({ isCurrentUser, isLastInGroup })}>
+                    <div className={getVirtualBubbleClasses({ isCurrentUser, isLastInGroup })}>
+                        <div className="px-4 py-2.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+                            {showSenderName && message.senderUsername && (
+                                <span className="basis-full text-xs text-[var(--accent-color)] font-semibold">
+                                    {message.senderUsername}
+                                </span>
+                            )}
+                            <span className="min-w-0 flex-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed">
+                                {matchIndices ? (
+                                    <HighlightedText text={message.text} matchIndices={matchIndices} />
+                                ) : (
+                                    message.text
+                                )}
+                            </span>
+                            <MessageMeta message={message} isCurrentUser={isCurrentUser} />
+                        </div>
+                    </div>
+                    {isLastInGroup && <VirtualBubbleTail isCurrentUser={isCurrentUser} />}
+                </div>
+            )}
+
+            {message.text && showMessageText && hasLinkPreviews && (
+                <div className="relative w-fit max-w-[min(80vw,320px)]">
+                    <p className={classNames(
+                        getVirtualBubbleClasses({ isCurrentUser, isLastInGroup }),
+                        "p-3 text-[15px] leading-relaxed break-words [overflow-wrap:anywhere]"
+                    )}>
                         {matchIndices ? (
                             <HighlightedText text={message.text} matchIndices={matchIndices} hideUrls={hasSuccessfulPreviews && !isUrlOnly} />
                         ) : (
@@ -407,19 +445,34 @@ const MessageBody = ({
             {previews.length > 0 && (
                 <div className="w-full max-w-sm flex flex-col gap-2 mt-1">
                     {previews.map((preview, i) => (
-                        <LinkPreview key={preview.url + i} preview={preview} isCurrentUser={isCurrentUser} />
+                        <div key={preview.url + i} className="relative">
+                            <LinkPreview preview={preview} isCurrentUser={isCurrentUser} />
+                            {isPreviewOnly && !preview.isLoading && !preview.error && preview.title && (
+                                <PreviewMessageMeta message={message} isCurrentUser={isCurrentUser} />
+                            )}
+                        </div>
                     ))}
                 </div>
             )}
 
             {/* Timestamp and status */}
-            {(!message.text || !showMessageText) && <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+            {!message.text && <div className="flex items-center gap-1.5 text-xs text-neutral-500">
                 <span>{formatTime(message.createdAt.toDate())}</span>
                 {isCurrentUser && <MessageStatus message={message} />}
             </div>}
         </div>
     );
 };
+
+const MessageMeta = ({ message, isCurrentUser }: { message: MessageProps; isCurrentUser: boolean }) => (
+    <span className={classNames(
+        "flex shrink-0 items-center gap-1 text-[10px] whitespace-nowrap translate-y-[2px]",
+        isCurrentUser ? "text-white/70" : "text-[var(--text-muted)]"
+    )}>
+        {formatTime(message.createdAt.toDate())}
+        {isCurrentUser && <MessageStatus message={message} />}
+    </span>
+);
 
 // Message status indicator
 const MessageStatus = ({ message }: { message: MessageProps }) => {
@@ -517,7 +570,7 @@ const NonVirtualizedMessages = ({
                 <EmptyState isGlobalChat={isGlobalChat} isGroupChat={isGroupChat} />
             ) : (
                 groupedMessages.map((group: { date: string; messages: MessageProps[] }) => (
-                    <div key={group.date} className="flex flex-col gap-3">
+                    <div key={group.date} className="flex flex-col">
                         <DateSeparator date={group.date} />
                         {group.messages.map((message: MessageProps, messageIndex: number) => (
                             <VirtualMessage 

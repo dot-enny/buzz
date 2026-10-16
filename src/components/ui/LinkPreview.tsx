@@ -84,16 +84,26 @@ const YouTubePreview = ({
         </div>
         
         {/* Info */}
-        <div className="p-3 flex items-center gap-2">
-            <img 
-                src={preview.favicon} 
-                alt="YouTube"
-                className="w-5 h-5 rounded"
-            />
-            <span className="text-sm text-neutral-400 truncate flex-1">
-                {preview.siteName}
-            </span>
-            <ArrowTopRightOnSquareIcon className="w-4 h-4 text-neutral-500" />
+        <div className="p-3">
+            <h4 className="font-medium text-white text-sm line-clamp-2">
+                {preview.title}
+            </h4>
+            {preview.description && (
+                <p className="mt-1 text-xs text-neutral-400 line-clamp-2">
+                    {preview.description}
+                </p>
+            )}
+            <div className="mt-2 flex items-center gap-2">
+                <img
+                    src={preview.favicon}
+                    alt="YouTube"
+                    className="h-5 w-5 rounded"
+                />
+                <span className="flex-1 truncate text-sm text-neutral-400">
+                    {preview.siteName}
+                </span>
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-neutral-500" />
+            </div>
         </div>
     </motion.a>
 );
